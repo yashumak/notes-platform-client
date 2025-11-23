@@ -2,17 +2,17 @@ import Link from "next/link";
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-gray-100 mt-17">
 
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-lg p-6 hidden md:block">
         <h2 className="text-2xl font-bold mb-6">NotesPlatform</h2>
 
         <nav className="space-y-3">
-          <Link href="/dashboard" className="block py-2 px-3 rounded-lg hover:bg-gray-100">🏠 Dashboard</Link>
+          {/* <Link href="/dashboard" className="block py-2 px-3 rounded-lg hover:bg-gray-100">🏠 Dashboard</Link> */}
           <Link href="/upload" className="block py-2 px-3 rounded-lg hover:bg-gray-100">📤 Upload Notes</Link>
           <Link href="/notes" className="block py-2 px-3 rounded-lg hover:bg-gray-100">📚 Browse Notes</Link>
-          <Link href="/profile" className="block py-2 px-3 rounded-lg hover:bg-gray-100">👤 Profile</Link>
+          {/* <Link href="/profile" className="block py-2 px-3 rounded-lg hover:bg-gray-100">👤 Profile</Link> */}
         </nav>
       </aside>
 

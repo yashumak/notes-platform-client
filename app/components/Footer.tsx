@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 py-12 mt-20">
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+    <footer className="bg-gray-900 text-gray-300 py-4 ">
+      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mt-20">
 
         {/* Logo + About */}
         <div className="space-y-3">
@@ -23,6 +23,7 @@ export default function Footer() {
             <li><Link href="/upload" className="hover:text-white">Upload Notes</Link></li>
             <li><Link href="/signup" className="hover:text-white">Signup</Link></li>
             <li><Link href="/login" className="hover:text-white">Login</Link></li>
+            <li><Link href="/dashboard" className="hover:text-white">dashboard</Link></li>
           </ul>
         </div>
 
@@ -40,23 +41,9 @@ export default function Footer() {
 
         {/* Contact + Socials */}
         <div>
-          <h3 className="text-xl font-semibold text-white mb-4">Connect With Us</h3>
-          <p className="text-gray-400">Email: support@noteshub.com</p>
+          <h3 className="text-xl font-semibold cursor-pointer text-white mb-4">Connect With Us</h3>
+          <p className="text-gray-400 cursor-pointer">Email: genteryourname296@gmail.com</p>
 
-          <div className="flex gap-4 mt-4">
-            <span className="w-9 h-9 bg-gray-800 hover:bg-blue-600 rounded-full flex items-center justify-center cursor-pointer">
-              <i className="fa-brands fa-instagram text-white text-lg" />
-            </span>
-            <span className="w-9 h-9 bg-gray-800 hover:bg-blue-500 rounded-full flex items-center justify-center cursor-pointer">
-              <i className="fa-brands fa-facebook text-white text-lg" />
-            </span>
-            <span className="w-9 h-9 bg-gray-800 hover:bg-sky-400 rounded-full flex items-center justify-center cursor-pointer">
-              <i className="fa-brands fa-twitter text-white text-lg" />
-            </span>
-            <span className="w-9 h-9 bg-gray-800 hover:bg-red-500 rounded-full flex items-center justify-center cursor-pointer">
-              <i className="fa-brands fa-youtube text-white text-lg" />
-            </span>
-          </div>
         </div>
       </div>
 
