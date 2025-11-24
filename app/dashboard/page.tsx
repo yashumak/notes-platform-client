@@ -1,76 +1,96 @@
+"use client";
+
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const student = {
+    name: "Yash Patil",
+    college: "Rashtrasant Tukadoji Maharaj Nagpur University",
+    branch: "Computer Engineering",
+    year: "Fall 2025/2026",
+  };
+
+  const uploadedNotes = [
+    { id: 1, title: "DBMS Unit 1 Notes", desc: "Full handwritten notes" },
+    { id: 2, title: "DSA Sorting", desc: "All sorting algorithms" },
+  ];
+
+  const downloadedNotes = [
+    { id: 1, title: "OS Memory Management", desc: "Easy explanation" },
+  ];
+
   return (
-    <div className="min-h-screen flex bg-gray-100 mt-17">
+    <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 hidden md:block">
-        <h2 className="text-2xl font-bold mb-6">NotesPlatform</h2>
+      {/* Profile Header */}
+      <div className="flex items-center gap-4 mb-8 mt-20">
+        <div className="w-16 h-16 bg-blue-200 rounded-full flex items-center justify-center text-2xl font-bold">
+          {student.name.charAt(0)}
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold">{student.name}</h1>
+          <p className="text-gray-600">Welcome to your dashboard 👋</p>
+        </div>
+      </div>
 
-        <nav className="space-y-3">
-          {/* <Link href="/dashboard" className="block py-2 px-3 rounded-lg hover:bg-gray-100">🏠 Dashboard</Link> */}
-          <Link href="/upload" className="block py-2 px-3 rounded-lg hover:bg-gray-100">📤 Upload Notes</Link>
-          <Link href="/notes" className="block py-2 px-3 rounded-lg hover:bg-gray-100">📚 Browse Notes</Link>
-          {/* <Link href="/profile" className="block py-2 px-3 rounded-lg hover:bg-gray-100">👤 Profile</Link> */}
-        </nav>
-      </aside>
+      {/* Student Details Section */}
+      <div className="bg-white shadow-md rounded-xl p-6 mb-8">
+        <h2 className="text-xl font-bold mb-4">My Studies</h2>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6">
-        
-        {/* User Profile Box */}
-        <div className="bg-white shadow-md rounded-xl p-5 flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-blue-200 flex items-center justify-center text-xl font-bold">
-            U
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 text-center gap-6">
           <div>
-            <h3 className="text-xl font-semibold">Welcome, User</h3>
-            <p className="text-gray-600 text-sm">Have a productive day ✨</p>
+            <p className="text-lg font-semibold">{student.college}</p>
+            <p className="text-gray-500 text-sm mt-1">University</p>
+          </div>
+
+          <div>
+            <p className="text-lg font-semibold">{student.branch}</p>
+            <p className="text-gray-500 text-sm mt-1">Branch</p>
+          </div>
+
+          <div>
+            <p className="text-lg font-semibold">{student.year}</p>
+            <p className="text-gray-500 text-sm mt-1">Academic Year</p>
           </div>
         </div>
+      </div>
 
-        {/* Recently Uploaded Notes */}
-        <h3 className="text-lg font-bold mb-3">Recently Uploaded Notes</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {[1, 2, 3].map((note) => (
-            <div
-              key={note}
-              className="bg-white p-4 shadow rounded-xl hover:shadow-lg transition"
-            >
-              <h4 className="font-semibold">Notes Title {note}</h4>
-              <p className="text-sm text-gray-600 mt-2">Short description here...</p>
-              <a
-                href="#"
-                className="text-blue-600 text-sm font-medium mt-3 inline-block"
-              >
-                View Note →
-              </a>
-            </div>
-          ))}
-        </div>
+      {/* Uploaded Notes Section */}
+      <div className="bg-white shadow-md rounded-xl p-6 mb-6">
+        <h2 className="text-xl font-bold mb-4">My Uploaded Notes</h2>
 
-        {/* Recommended Notes */}
-        <h3 className="text-lg font-bold mb-3">Recommended For You</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((note) => (
-            <div
-              key={note}
-              className="bg-white p-4 shadow rounded-xl hover:shadow-lg transition"
-            >
-              <h4 className="font-semibold">Recommended Note {note}</h4>
-              <p className="text-sm text-gray-600 mt-2">Helpful study material...</p>
-              <a
-                href="#"
-                className="text-blue-600 text-sm font-medium mt-3 inline-block"
-              >
-                View Note →
-              </a>
-            </div>
-          ))}
-        </div>
+        {uploadedNotes.length === 0 ? (
+          <p className="text-gray-600">No notes uploaded yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {uploadedNotes.map((note) => (
+              <div key={note.id} className="border p-3 rounded-lg">
+                <h4 className="font-semibold">{note.title}</h4>
+                <p className="text-sm text-gray-500">{note.desc}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      </main>
+      {/* Downloaded Notes Section */}
+      <div className="bg-white shadow-md rounded-xl p-6">
+        <h2 className="text-xl font-bold mb-4">My Downloaded Notes</h2>
+
+        {downloadedNotes.length === 0 ? (
+          <p className="text-gray-600">No downloaded notes yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {downloadedNotes.map((note) => (
+              <div key={note.id} className="border p-3 rounded-lg">
+                <h4 className="font-semibold">{note.title}</h4>
+                <p className="text-sm text-gray-500">{note.desc}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

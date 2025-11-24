@@ -1,9 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function UploadNotesPage() {
   const [progress, setProgress] = useState(0);
+
+  // const [universities, setUniversities] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  // const [uniSearch, setUniSearch] = useState("");
+  const [courseSearch, setCourseSearch] = useState("");
+
+  // const [showUniList, setShowUniList] = useState(false);
+  const [showCourseList, setShowCourseList] = useState(false);
+
+  // ✅ Load JSON automatically from public folder
+  useEffect(() => {
+
+    fetch("/data/engineeringData.json")
+      .then((res) => res.json())
+      .then((data) => {
+        // setUniversities(data.colleges || []);
+        setCourses(data.branches || []);
+      })
+      .catch((err) => console.error("Error loading JSON:", err));
+  }, []);
+
+  // Filter logic
+  // const filteredUniversities = universities.filter((u) =>
+  //   u.toLowerCase().startsWith(uniSearch.toLowerCase())
+  // );
+
+  const filteredCourses = courses.filter((c) =>
+    c.toLowerCase().startsWith(courseSearch.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 mt-15">
@@ -13,7 +43,7 @@ export default function UploadNotesPage() {
 
         <form className="space-y-6">
 
-          {/* 2 Columns — Title + Category */}
+          {/* 2 Columns — Title + Branch */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Title */}
             <div>
@@ -25,17 +55,42 @@ export default function UploadNotesPage() {
               />
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Category</label>
-              <select className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500">
-                <option>-- Select Category --</option>
-                <option>Computer Science</option>
-                <option>Electronics</option>
-                <option>Mechanical</option>
-                <option>Civil</option>
-                <option>IT</option>
-              </select>
+            {/* Branch */}
+            <div className="relative">
+              <label className="block mb-1 text-sm font-medium">Branch / Course</label>
+
+              <input
+                type="text"
+                placeholder="Search & select your branch"
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                value={courseSearch}
+                onChange={(e) => {
+                  setCourseSearch(e.target.value);
+                  setShowCourseList(true);
+                }}
+                onFocus={() => setShowCourseList(true)}
+              />
+
+              {showCourseList && (
+                <ul className="absolute z-10 w-full bg-white border shadow-lg max-h-56 overflow-y-auto rounded-lg mt-1">
+                  {filteredCourses.length > 0 ? (
+                    filteredCourses.map((course, i) => (
+                      <li
+                        key={i}
+                        className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                        onClick={() => {
+                          setCourseSearch(course);
+                          setShowCourseList(false);
+                        }}
+                      >
+                        {course}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-4 py-2 text-gray-500">No matches found</li>
+                  )}
+                </ul>
+              )}
             </div>
           </div>
 
@@ -48,15 +103,26 @@ export default function UploadNotesPage() {
             ></textarea>
           </div>
 
-          {/* Tags + File Upload — 2 Columns */}
+          {/* Type  */}
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Type</label>
+            <input
+              type="text"
+              placeholder="e.g. Notes, Assignments, Papers, Que Banks, PPT, Reports, other..."
+              className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* subjects */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* Tags */}
             <div>
-              <label className="block text-sm font-medium mb-1">Tags</label>
+              <label className="block text-sm font-medium mb-1">Subjects</label>
               <input
                 type="text"
-                placeholder="e.g. DSA, Notes, Semester 3"
+                placeholder="e.g. CS, AI, DBMS, CN, OS, other..."
                 className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
               />
             </div>
