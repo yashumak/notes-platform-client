@@ -1,161 +1,198 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-export default function UploadNotesPage() {
-  const [progress, setProgress] = useState(0);
+interface UploadResponse {
+  success: boolean;
+  message?: string;
+  url?: string;
+}
 
-  // const [universities, setUniversities] = useState([]);
-  const [courses, setCourses] = useState([]);
+const UploadNote: React.FC = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
-  // const [uniSearch, setUniSearch] = useState("");
-  const [courseSearch, setCourseSearch] = useState("");
+  const [university, setUniversity] = useState("");
+  const [course, setCourse] = useState("");
+  const [studyType, setStudyType] = useState("");
+  const [year, setYear] = useState("");
 
-  // const [showUniList, setShowUniList] = useState(false);
-  const [showCourseList, setShowCourseList] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Load JSON automatically from public folder
-  useEffect(() => {
+  const studyTypes: string[] = [
+    "Notes",
+    "Assignments",
+    "Papers",
+    "Que Banks",
+    "PPT",
+    "Reports",
+  ];
 
-    fetch("/data/engineeringData.json")
-      .then((res) => res.json())
-      .then((data) => {
-        // setUniversities(data.colleges || []);
-        setCourses(data.branches || []);
-      })
-      .catch((err) => console.error("Error loading JSON:", err));
-  }, []);
+  const universities: string[] = [
+    "RTMNU",
+    "Pune University",
+    "Mumbai University",
+    "Nagpur University",
+  ];
 
-  // Filter logic
-  // const filteredUniversities = universities.filter((u) =>
-  //   u.toLowerCase().startsWith(uniSearch.toLowerCase())
-  // );
+  const courses: string[] = ["B.Tech", "B.E", "MCA", "B.Sc CS", "Diploma"];
 
-  const filteredCourses = courses.filter((c) =>
-    c.toLowerCase().startsWith(courseSearch.toLowerCase())
-  );
+  const years: string[] = [
+    "2025",
+    "2024",
+    "2023",
+    "2022",
+    "2021",
+    "2020",
+    "2019",
+  ];
+
+  const handleUpload = async () => {
+    if (!file) {
+      alert("Please select a file!");
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("university", university);
+    formData.append("course", course);
+    formData.append("studyType", studyType);
+    formData.append("year", year);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/notes/upload", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+        body: formData,
+      });
+
+      const data: UploadResponse = await response.json();
+      console.log(data);
+
+      if (data.success) {
+        alert("Upload successful!");
+      } else {
+        alert(data.message || "Upload failed!");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong while uploading.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 mt-15">
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8">
-        <h2 className="text-3xl font-bold mb-4">Upload Notes</h2>
-        <p className="text-gray-600 mb-6">Share your study materials with everyone.</p>
+    <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-lg mt-20">
+      <h2 className="text-2xl font-bold mb-4">Upload Study Material</h2>
 
-        <form className="space-y-6">
+      {/* File Input */}
+      <label className="text-gray-700 text-sm font-medium">Select File</label>
+      <input
+        type="file"
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+      />
 
-          {/* 2 Columns — Title + Branch */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
-              <input
-                type="text"
-                placeholder="Enter notes title"
-                className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+      {/* Title */}
+      <label className="text-gray-700 text-sm font-medium">Title</label>
+      <input
+        type="text"
+        placeholder="Enter title"
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
 
-            {/* Branch */}
-            <div className="relative">
-              <label className="block mb-1 text-sm font-medium">Branch / Course</label>
+      {/* Description */}
+      <label className="text-gray-700 text-sm font-medium">Description</label>
+      <textarea
+        placeholder="Enter description"
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
 
-              <input
-                type="text"
-                placeholder="Search & select your branch"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                value={courseSearch}
-                onChange={(e) => {
-                  setCourseSearch(e.target.value);
-                  setShowCourseList(true);
-                }}
-                onFocus={() => setShowCourseList(true)}
-              />
+      {/* University */}
+      <label className="text-gray-700 text-sm font-medium">University</label>
+      <select
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        value={university}
+        onChange={(e) => setUniversity(e.target.value)}
+      >
+        <option value="">Select University</option>
+        {universities.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
 
-              {showCourseList && (
-                <ul className="absolute z-10 w-full bg-white border shadow-lg max-h-56 overflow-y-auto rounded-lg mt-1">
-                  {filteredCourses.length > 0 ? (
-                    filteredCourses.map((course, i) => (
-                      <li
-                        key={i}
-                        className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
-                        onClick={() => {
-                          setCourseSearch(course);
-                          setShowCourseList(false);
-                        }}
-                      >
-                        {course}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-4 py-2 text-gray-500">No matches found</li>
-                  )}
-                </ul>
-              )}
-            </div>
-          </div>
+      {/* Course */}
+      <label className="text-gray-700 text-sm font-medium">Course</label>
+      <select
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        value={course}
+        onChange={(e) => setCourse(e.target.value)}
+      >
+        <option value="">Select Course</option>
+        {courses.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
 
-          {/* Full Width — Description */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              placeholder="Short description about the notes"
-              className="w-full border rounded-lg px-4 py-3 h-24 focus:ring-2 focus:ring-blue-500"
-            ></textarea>
-          </div>
+      {/* Study Material Type */}
+      <label className="text-gray-700 text-sm font-medium">
+        Study Material Type
+      </label>
+      <select
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        value={studyType}
+        onChange={(e) => setStudyType(e.target.value)}
+      >
+        <option value="">Select Type</option>
+        {studyTypes.map((t) => (
+          <option key={t} value={t}>
+            {t}
+          </option>
+        ))}
+      </select>
 
-          {/* Type  */}
+      {/* Year */}
+      <label className="text-gray-700 text-sm font-medium">Academic Year</label>
+      <select
+        className="w-full mt-2 mb-4 p-2 border rounded-lg"
+        value={year}
+        onChange={(e) => setYear(e.target.value)}
+      >
+        <option value="">Select Year</option>
+        {years.map((y) => (
+          <option key={y} value={y}>
+            {y}
+          </option>
+        ))}
+      </select>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
-            <input
-              type="text"
-              placeholder="e.g. Notes, Assignments, Papers, Que Banks, PPT, Reports, other..."
-              className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* subjects */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Tags */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Subjects</label>
-              <input
-                type="text"
-                placeholder="e.g. CS, AI, DBMS, CN, OS, other..."
-                className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* File Upload */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Upload File</label>
-              <input
-                type="file"
-                className="w-full border rounded-lg px-4 py-3 bg-gray-50 
-                file:bg-blue-600 file:text-white 
-                file:px-4 file:py-2 file:rounded-lg"
-                onChange={() => setProgress(40)} // dummy
-              />
-            </div>
-          </div>
-
-          {/* Upload Progress */}
-          {progress > 0 && (
-            <div className="w-full bg-gray-200 rounded-lg h-3 overflow-hidden">
-              <div
-                className="bg-blue-600 h-3 transition-all"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
-            Upload Notes
-          </button>
-        </form>
-      </div>
+      {/* Upload Button */}
+      <button
+        onClick={handleUpload}
+        disabled={loading}
+        className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg mt-4 hover:bg-blue-700 disabled:bg-gray-400"
+      >
+        {loading ? "Uploading..." : "Upload"}
+      </button>
     </div>
   );
-}
+};
+
+export default UploadNote;
