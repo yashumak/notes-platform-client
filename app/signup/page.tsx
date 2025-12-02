@@ -1,185 +1,249 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
+import Link from "next/link";
 
 export default function SignupPage() {
-  const [universities, setUniversities] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [university, setUniversity] = useState("");
+  const [course, setCourse] = useState("");
+  const [year, setYear] = useState("");
 
   const [uniSearch, setUniSearch] = useState("");
   const [courseSearch, setCourseSearch] = useState("");
-
   const [showUniList, setShowUniList] = useState(false);
   const [showCourseList, setShowCourseList] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ✅ Load JSON automatically from public folder
-  useEffect(() => {
-    fetch("/data/engineeringData.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setUniversities(data.colleges || []);
-        setCourses(data.branches || []);
-      })
-      .catch((err) => console.error("Error loading JSON:", err));
-  }, []);
+  const universities = [
+    "Savitribai Phule Pune University",
+    "Mumbai University",
+    "Dr. Babasaheb Ambedkar Marathwada University",
+    "Shivaji University",
+    "Rashtrasant Tukadoji Maharaj Nagpur University",
+  ];
 
-  // Filter logic
-  const filteredUniversities = universities.filter((u) =>
-    u.toLowerCase().startsWith(uniSearch.toLowerCase())
-  );
+  const courses = [
+    "Computer Engineering",
+    "Information Technology",
+    "Electronics Engineering",
+    "AIML",
+    "Civil Engineering",
+    "Mechanical Engineering",
+  ];
 
-  const filteredCourses = courses.filter((c) =>
-    c.toLowerCase().startsWith(courseSearch.toLowerCase())
-  );
+  const yearOptions = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!fullName.trim()) newErrors.fullName = "Full name is required.";
+    if (!email.trim()) newErrors.email = "Email is required.";
+    if (!password.trim()) newErrors.password = "Password is required.";
+    if (!university.trim()) newErrors.university = "University is required.";
+    if (!course.trim()) newErrors.course = "Course is required.";
+    if (!year.trim()) newErrors.year = "Year is required.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        {
+          name: fullName,
+          email,
+          password,
+          university,
+          course,
+          year,
+        }
+      );
+
+
+      alert("Registration successful!");
+      window.location.href = "/login"; // redirect to login page
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.response?.data?.message || "Registration failed");
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 mt-10">
-      <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-8">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="bg-white shadow-md rounded-xl p-8 max-w-lg w-full">
+        <h1 className="text-2xl font-bold text-center mb-4">Create Account</h1>
+        <p className="text-center text-gray-600 mb-6">Fill the details below</p>
 
-        <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
-        <p className="text-center text-gray-500 mb-6">Join the notes community</p>
-
-        <form className="space-y-6">
-
-          {/* NAME + EMAIL */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            <div>
-              <label className="block mb-1 text-sm font-medium">Full Name</label>
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm font-medium">Email</label>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Full Name */}
+          <div>
+            <label className="font-medium">Full Name</label>
+            <input
+              type="text"
+              className="w-full p-3 mt-1 border rounded-md"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+            {errors.fullName && (
+              <p className="text-red-500 text-sm">{errors.fullName}</p>
+            )}
           </div>
 
-          {/* UNIVERSITY + COURSE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* UNIVERSITY */}
-            <div className="relative">
-              <label className="block mb-1 text-sm font-medium">College / University</label>
-
-              <input
-                type="text"
-                placeholder="Search & select your college"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                value={uniSearch}
-                onChange={(e) => {
-                  setUniSearch(e.target.value);
-                  setShowUniList(true);
-                }}
-                onFocus={() => setShowUniList(true)}
-              />
-
-              {showUniList && (
-                <ul className="absolute z-10 w-full bg-white border shadow-lg max-h-56 overflow-y-auto rounded-lg mt-1">
-                  {filteredUniversities.length > 0 ? (
-                    filteredUniversities.map((uni, i) => (
-                      <li
-                        key={i}
-                        className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
-                        onClick={() => {
-                          setUniSearch(uni);
-                          setShowUniList(false);
-                        }}
-                      >
-                        {uni}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-4 py-2 text-gray-500">No matches found</li>
-                  )}
-                </ul>
-              )}
-            </div>
-
-            {/* BRANCH */}
-            <div className="relative">
-              <label className="block mb-1 text-sm font-medium">Branch / Course</label>
-
-              <input
-                type="text"
-                placeholder="Search & select your branch"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                value={courseSearch}
-                onChange={(e) => {
-                  setCourseSearch(e.target.value);
-                  setShowCourseList(true);
-                }}
-                onFocus={() => setShowCourseList(true)}
-              />
-
-              {showCourseList && (
-                <ul className="absolute z-10 w-full bg-white border shadow-lg max-h-56 overflow-y-auto rounded-lg mt-1">
-                  {filteredCourses.length > 0 ? (
-                    filteredCourses.map((course, i) => (
-                      <li
-                        key={i}
-                        className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
-                        onClick={() => {
-                          setCourseSearch(course);
-                          setShowCourseList(false);
-                        }}
-                      >
-                        {course}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-4 py-2 text-gray-500">No matches found</li>
-                  )}
-                </ul>
-              )}
-            </div>
-
+          {/* Email */}
+          <div>
+            <label className="font-medium">Email</label>
+            <input
+              type="email"
+              className="w-full p-3 mt-1 border rounded-md"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email}</p>
+            )}
           </div>
 
-          {/* PASSWORD + YEAR */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            <div>
-              <label className="block mb-1 text-sm font-medium">Password</label>
-              <input
-                type="password"
-                placeholder="Create a strong password"
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm font-medium">Year</label>
-              <select className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                <option value="">Select your year</option>
-                <option>1st Year</option>
-                <option>2nd Year</option>
-                <option>3rd Year</option>
-                <option>4th Year</option>
-                <option>5th Year+</option>
-              </select>
-            </div>
-
+          {/* Password */}
+          <div>
+            <label className="font-medium">Password</label>
+            <input
+              type="password"
+              className="w-full p-3 mt-1 border rounded-md"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password}</p>
+            )}
           </div>
 
+          {/* University Dropdown */}
+          <div>
+            <label className="font-medium">University</label>
+            <input
+              type="text"
+              value={uniSearch}
+              onChange={(e) => {
+                setUniSearch(e.target.value);
+                setShowUniList(true);
+              }}
+              onFocus={() => setShowUniList(true)}
+              className="w-full p-3 mt-1 border rounded-md"
+              placeholder="Search university"
+            />
+
+            {showUniList && (
+              <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
+                {universities
+                  .filter((u) =>
+                    u.toLowerCase().includes(uniSearch.toLowerCase())
+                  )
+                  .map((u, i) => (
+                    <li
+                      key={i}
+                      className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                      onClick={() => {
+                        setUniSearch(u);
+                        setUniversity(u);
+                        setShowUniList(false);
+                      }}
+                    >
+                      {u}
+                    </li>
+                  ))}
+              </ul>
+            )}
+            {errors.university && (
+              <p className="text-red-500 text-sm">{errors.university}</p>
+            )}
+          </div>
+
+          {/* Course Dropdown */}
+          <div>
+            <label className="font-medium">Course</label>
+            <input
+              type="text"
+              value={courseSearch}
+              onChange={(e) => {
+                setCourseSearch(e.target.value);
+                setShowCourseList(true);
+              }}
+              onFocus={() => setShowCourseList(true)}
+              className="w-full p-3 mt-1 border rounded-md"
+              placeholder="Search course"
+            />
+
+            {showCourseList && (
+              <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
+                {courses
+                  .filter((c) =>
+                    c.toLowerCase().includes(courseSearch.toLowerCase())
+                  )
+                  .map((c, i) => (
+                    <li
+                      key={i}
+                      className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                      onClick={() => {
+                        setCourseSearch(c);
+                        setCourse(c);
+                        setShowCourseList(false);
+                      }}
+                    >
+                      {c}
+                    </li>
+                  ))}
+              </ul>
+            )}
+            {errors.course && (
+              <p className="text-red-500 text-sm">{errors.course}</p>
+            )}
+          </div>
+
+          {/* Year */}
+          <div>
+            <label className="font-medium">Year</label>
+            <select
+              className="w-full p-3 mt-1 border rounded-md"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              <option value="">Select Year</option>
+              {yearOptions.map((y, i) => (
+                <option key={i} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+
+            {errors.year && (
+              <p className="text-red-500 text-sm">{errors.year}</p>
+            )}
+          </div>
+
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition"
           >
-            Create Account
+            Register
           </button>
 
+          <p className="mt-3 text-center">
+            Already have an account?{" "}
+            <Link href="/login" className="text-blue-600 font-medium">
+              Login
+            </Link>
+          </p>
         </form>
-
       </div>
     </div>
   );

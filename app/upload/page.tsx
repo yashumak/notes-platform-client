@@ -66,10 +66,10 @@ const UploadNote: React.FC = () => {
     formData.append("year", year);
 
     try {
-      const response = await fetch("http://localhost:5000/api/notes/upload", {
+      const response = await fetch("/api/notes/upload", {
         method: "POST",
         headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
+          // Authorization: "Bearer " + localStorage.getItem("token"), // Removed as JWT is now in HttpOnly cookie
         },
         body: formData,
       });

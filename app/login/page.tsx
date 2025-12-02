@@ -1,50 +1,89 @@
-export default function LoginPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
-        
-        <h2 className="text-3xl font-bold text-center mb-2">Welcome Back</h2>
-        <p className="text-center text-gray-500 mb-6">Login to your account</p>
+"use client";
 
-        <form className="space-y-5">
+import { useState } from "react";
+import axios from "axios";
+import Link from "next/link";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
+
+      alert("Login successful!");
+      window.location.href = "/home"; // redirect after login
+    } catch (error: any) {
+      console.error(error);
+      setErrorMsg(error?.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="bg-white shadow-md rounded-xl p-8 max-w-lg w-full">
+        <h1 className="text-2xl font-bold text-center mb-4">Welcome Back</h1>
+        <p className="text-center text-gray-600 mb-6">Login to continue</p>
+
+        {errorMsg && (
+          <p className="text-red-500 text-center mb-4">{errorMsg}</p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Email</label>
+            <label className="font-medium">Email</label>
             <input
               type="email"
+              className="w-full p-3 mt-1 border rounded-md"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Password</label>
+            <label className="font-medium">Password</label>
             <input
               type="password"
-              placeholder="Enter your password"
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 mt-1 border rounded-md"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
             />
           </div>
 
-          <div className="flex justify-between text-sm">
-            <a href="/forgot-password" className="text-blue-600 hover:underline">
-              Forgot Password?
-            </a>
-          </div>
-
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+            disabled={loading}
+            className={`w-full text-white p-3 rounded-md transition ${
+              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
-        </form>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Don’t have an account?{" "}
-          <a href="/signup" className="text-blue-600 hover:underline">
-            Create one
-          </a>
-        </p>
+          <p className="mt-3 text-center">
+            Don’t have an account?{" "}
+            <Link href="/signup" className="text-blue-600 font-medium">
+              Register
+            </Link>
+          </p>
+        </form>
       </div>
     </div>
   );

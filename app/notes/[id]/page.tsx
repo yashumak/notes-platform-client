@@ -70,6 +70,7 @@ export default function NotesPage() {
                     className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
                     onClick={() => {
                       setUniSearch(uni);
+                      
                       setShowUniList(false);
                     }}
                   >
