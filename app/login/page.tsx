@@ -22,7 +22,7 @@ export default function LoginPage() {
       });
 
       alert("Login successful!");
-      window.location.href = "/home"; // redirect after login
+      window.location.href = "/"; // redirect to home page
     } catch (error: any) {
       console.error(error);
       setErrorMsg(error?.response?.data?.message || "Login failed");
@@ -32,7 +32,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <div className="bg-white shadow-md rounded-xl p-8 max-w-lg w-full">
         <h1 className="text-2xl font-bold text-center mb-4">Welcome Back</h1>
         <p className="text-center text-gray-600 mb-6">Login to continue</p>
@@ -70,9 +70,8 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full text-white p-3 rounded-md transition ${
-              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className={`w-full text-white p-3 rounded-md transition ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+              }`}
           >
             {loading ? "Logging in..." : "Login"}
           </button>

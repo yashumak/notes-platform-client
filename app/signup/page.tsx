@@ -1,50 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState("");
+  const [name, setname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [university, setUniversity] = useState("");
-  const [course, setCourse] = useState("");
+  const [branch, setBranch] = useState("");
   const [year, setYear] = useState("");
 
   const [uniSearch, setUniSearch] = useState("");
-  const [courseSearch, setCourseSearch] = useState("");
   const [showUniList, setShowUniList] = useState(false);
-  const [showCourseList, setShowCourseList] = useState(false);
+  const [branchSearch, setBranchSearch] = useState("");
+  const [showBranchList, setShowBranchList] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const universities = [
-    "Savitribai Phule Pune University",
-    "Mumbai University",
-    "Dr. Babasaheb Ambedkar Marathwada University",
-    "Shivaji University",
-    "Rashtrasant Tukadoji Maharaj Nagpur University",
-  ];
+  const [universities, setUniversities] = useState<string[]>([]);
+  const [branches, setBranches] = useState<string[]>([]);
 
-  const courses = [
-    "Computer Engineering",
-    "Information Technology",
-    "Electronics Engineering",
-    "AIML",
-    "Civil Engineering",
-    "Mechanical Engineering",
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/data/engineeringData.json");
+        const data = await response.json();
+        setUniversities(data.colleges);
+        setBranches(data.branches);
+      } catch (error) {
+        console.error("Error fetching engineering data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const yearOptions = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+  const yearOptions = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Final Year"];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!fullName.trim()) newErrors.fullName = "Full name is required.";
+    if (!name.trim()) newErrors.name = "Full name is required.";
     if (!email.trim()) newErrors.email = "Email is required.";
     if (!password.trim()) newErrors.password = "Password is required.";
     if (!university.trim()) newErrors.university = "University is required.";
-    if (!course.trim()) newErrors.course = "Course is required.";
+    if (!branch.trim()) newErrors.branch = "Branch is required.";
     if (!year.trim()) newErrors.year = "Year is required.";
 
     setErrors(newErrors);
@@ -59,18 +59,17 @@ export default function SignupPage() {
       const response = await axios.post(
         "http://localhost:5000/api/auth/register",
         {
-          name: fullName,
+          name,
           email,
           password,
           university,
-          course,
+          course: branch,
           year,
         }
       );
 
-
       alert("Registration successful!");
-      window.location.href = "/login"; // redirect to login page
+      window.location.href = "/";
     } catch (error: any) {
       console.error(error);
       alert(error?.response?.data?.message || "Registration failed");
@@ -78,24 +77,26 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white shadow-md rounded-xl p-8 max-w-lg w-full">
-        <h1 className="text-2xl font-bold text-center mb-4">Create Account</h1>
-        <p className="text-center text-gray-600 mb-6">Fill the details below</p>
+    <div className="min-h-screen flex items-center justify-center p-6 mt-10">
+      <div className="bg-white shadow-md rounded-xl p-8 max-w-4xl w-full">
+        <h1 className="text-3xl font-bold text-center mb-4">Create Account</h1>
+        <p className="text-center text-gray-600 mb-6">
+          Fill the details below
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 2 Column Form */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
           {/* Full Name */}
           <div>
             <label className="font-medium">Full Name</label>
             <input
               type="text"
               className="w-full p-3 mt-1 border rounded-md"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              value={name}
+              onChange={(e) => setname(e.target.value)}
             />
-            {errors.fullName && (
-              <p className="text-red-500 text-sm">{errors.fullName}</p>
-            )}
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </div>
 
           {/* Email */}
@@ -107,9 +108,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
           </div>
 
           {/* Password */}
@@ -124,11 +123,35 @@ export default function SignupPage() {
             {errors.password && (
               <p className="text-red-500 text-sm">{errors.password}</p>
             )}
+            {password.length > 0 && password.length < 7 && (
+              <p className="text-red-500 text-sm">Password must be at least 7 characters.</p>
+            )}
           </div>
 
-          {/* University Dropdown */}
+          {/* Year */}
           <div>
-            <label className="font-medium">University</label>
+            <label className="font-medium">Year</label>
+            <select
+              className="w-full p-3 mt-1 border rounded-md"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              <option value="">Select Year</option>
+              {yearOptions.map((y, i) => (
+                <option key={i} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+
+            {errors.year && (
+              <p className="text-red-500 text-sm">{errors.year}</p>
+            )}
+          </div>
+
+          {/* University */}
+          <div className="col-span-1 md:col-span-2">
+            <label className="font-medium">University/Collage</label>
             <input
               type="text"
               value={uniSearch}
@@ -167,82 +190,63 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Course Dropdown */}
-          <div>
-            <label className="font-medium">Course</label>
+          {/* Branch */}
+          <div className="col-span-1 md:col-span-2">
+            <label className="font-medium">Branch</label>
             <input
               type="text"
-              value={courseSearch}
+              value={branchSearch}
               onChange={(e) => {
-                setCourseSearch(e.target.value);
-                setShowCourseList(true);
+                setBranchSearch(e.target.value);
+                setShowBranchList(true);
               }}
-              onFocus={() => setShowCourseList(true)}
+              onFocus={() => setShowBranchList(true)}
               className="w-full p-3 mt-1 border rounded-md"
-              placeholder="Search course"
+              placeholder="Search branch"
             />
 
-            {showCourseList && (
+            {showBranchList && (
               <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
-                {courses
-                  .filter((c) =>
-                    c.toLowerCase().includes(courseSearch.toLowerCase())
+                {branches
+                  .filter((b) =>
+                    b.toLowerCase().includes(branchSearch.toLowerCase())
                   )
-                  .map((c, i) => (
+                  .map((b, i) => (
                     <li
                       key={i}
                       className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
                       onClick={() => {
-                        setCourseSearch(c);
-                        setCourse(c);
-                        setShowCourseList(false);
+                        setBranchSearch(b);
+                        setBranch(b);
+                        setShowBranchList(false);
                       }}
                     >
-                      {c}
+                      {b}
                     </li>
                   ))}
               </ul>
             )}
-            {errors.course && (
-              <p className="text-red-500 text-sm">{errors.course}</p>
+            {errors.branch && (
+              <p className="text-red-500 text-sm">{errors.branch}</p>
             )}
           </div>
 
-          {/* Year */}
-          <div>
-            <label className="font-medium">Year</label>
-            <select
-              className="w-full p-3 mt-1 border rounded-md"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
+          {/* Submit Button */}
+          <div className="col-span-1 md:col-span-2">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition"
             >
-              <option value="">Select Year</option>
-              {yearOptions.map((y, i) => (
-                <option key={i} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+              Register
+            </button>
 
-            {errors.year && (
-              <p className="text-red-500 text-sm">{errors.year}</p>
-            )}
+            <p className="mt-3 text-center">
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-600 font-medium">
+                Login
+              </Link>
+            </p>
           </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition"
-          >
-            Register
-          </button>
-
-          <p className="mt-3 text-center">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-600 font-medium">
-              Login
-            </Link>
-          </p>
         </form>
       </div>
     </div>
