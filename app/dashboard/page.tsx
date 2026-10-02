@@ -41,6 +41,8 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [photoError, setPhotoError] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -118,6 +120,26 @@ export default function DashboardPage() {
     }
   };
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    setLogoutError("");
+
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Could not log out. Please try again.");
+
+      window.dispatchEvent(new Event("auth-state-updated"));
+      router.replace("/");
+    } catch (logoutFailure) {
+      setLogoutError(logoutFailure instanceof Error ? logoutFailure.message : "Could not log out. Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   if (loading) {
     return <main className="min-h-screen px-6 pb-16 pt-28 text-slate-300">Loading your dashboard...</main>;
   }
@@ -155,22 +177,33 @@ export default function DashboardPage() {
             <h1 className="mt-1 wrap-break-word text-3xl font-bold text-white">{profile.name}</h1>
             <p className="mt-1 break-all text-slate-400">{profile.email}</p>
           </div>
-          <div className="sm:ml-auto">
-            <label
-              htmlFor="profile-photo"
-              className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${photoUploading ? "pointer-events-none border-slate-700 text-slate-500" : "border-cyan-400/50 text-cyan-200 hover:bg-cyan-400/10"}`}
+          <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
+            <div>
+              <label
+                htmlFor="profile-photo"
+                className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${photoUploading ? "pointer-events-none border-slate-700 text-slate-500" : "border-cyan-400/50 text-cyan-200 hover:bg-cyan-400/10"}`}
+              >
+                {photoUploading ? "Uploading photo..." : profile.profilePhotoUrl ? "Change photo" : "Add profile photo"}
+              </label>
+              <input
+                id="profile-photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                disabled={photoUploading}
+                onChange={handlePhotoChange}
+              />
+              {photoError && <p className="mt-2 max-w-56 text-sm text-rose-300" role="alert">{photoError}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-rose-400/40 px-4 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:bg-rose-400/10 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:cursor-wait disabled:opacity-60"
             >
-              {photoUploading ? "Uploading photo..." : profile.profilePhotoUrl ? "Change photo" : "Add profile photo"}
-            </label>
-            <input
-              id="profile-photo"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="sr-only"
-              disabled={photoUploading}
-              onChange={handlePhotoChange}
-            />
-            {photoError && <p className="mt-2 max-w-56 text-sm text-rose-300" role="alert">{photoError}</p>}
+              {loggingOut ? "Logging out..." : "Log out"}
+            </button>
+            {logoutError && <p className="basis-full text-sm text-rose-300" role="alert">{logoutError}</p>}
           </div>
         </header>
 

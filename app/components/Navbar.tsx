@@ -35,10 +35,12 @@ export default function Navbar() {
     const refreshUser = () => loadUser();
     loadUser();
     window.addEventListener("profile-photo-updated", refreshUser);
+    window.addEventListener("auth-state-updated", refreshUser);
 
     return () => {
       controller.abort();
       window.removeEventListener("profile-photo-updated", refreshUser);
+      window.removeEventListener("auth-state-updated", refreshUser);
     };
   }, []);
 
