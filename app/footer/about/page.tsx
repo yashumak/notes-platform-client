@@ -9,19 +9,35 @@
  */
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8">
-        <h1 className="text-3xl font-bold mb-4">About</h1>
-        <p className="text-gray-700 mb-4">
-          Notes Platform helps students share, browse, and download study materials
-          across subjects and semesters. Our goal is to make learning resources
-          accessible, organized, and easy to discover.
-        </p>
-        <p className="text-gray-700">
-          Upload your notes to help others. Explore curated content, search by
-          categories and tags, and find what you need faster.
+    <main className="min-h-screen px-6 py-30 text-slate-100">
+      <div className="mx-auto max-w-4xl">
+        <header className="border-b border-slate-700 pb-10">
+          <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">About NotesHub</p>
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">Learning gets better when we share.</h1>
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
+            NotesHub helps students find and share useful study materials across subjects, courses, and universities.
+          </p>
+        </header>
+
+        <div className="grid gap-10 border-b border-slate-700 py-10 md:grid-cols-2 md:gap-14">
+          <section>
+            <h2 className="text-xl font-semibold text-cyan-200">Our purpose</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Make study resources easier to discover, organized by the details students need, and available to a wider learning community.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-xl font-semibold text-fuchsia-200">Built for sharing</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Browse notes, assignments, papers, question banks, presentations, and other materials. Share resources you have the right to distribute to help another student prepare.
+            </p>
+          </section>
+        </div>
+
+        <p className="pt-8 text-sm text-slate-400">
+          A student-powered library for learning, revision, and discovery.
         </p>
       </div>
-    </div>
+    </main>
   );
 }

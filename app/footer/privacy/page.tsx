@@ -10,22 +10,37 @@
  */
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8">
-        <h1 className="text-3xl font-bold mb-4">Privacy Policy</h1>
-        <p className="text-gray-700 mb-4">
-          We collect minimal data necessary for account management and platform
-          functionality, such as your name, email, and uploaded materials.
-        </p>
-        <p className="text-gray-700 mb-4">
-          Your data is not sold. We use security measures to protect information
-          and only share data when required by law or to operate core services.
-        </p>
-        <p className="text-gray-700">
-          You may request deletion of your account and uploaded content. For
-          privacy inquiries, contact support.
-        </p>
-      </div>
-    </div>
+    <main className="min-h-screen px-6 py-30 text-slate-100">
+      <article className="mx-auto max-w-4xl">
+        <header className="border-b border-slate-700 pb-10">
+          <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">Policies</p>
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">Privacy</h1>
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
+            A clear overview of the information used to provide your NotesHub account and study library.
+          </p>
+        </header>
+
+        <div className="divide-y divide-slate-700">
+          <section className="py-8">
+            <h2 className="text-xl font-semibold text-cyan-200">Information we use</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Account and profile details, including your name, email, university, course, and year, help provide account features. Uploaded materials and their descriptions are stored so they can be listed and downloaded.
+            </p>
+          </section>
+          <section className="py-8">
+            <h2 className="text-xl font-semibold text-blue-200">How it is used</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Information is used to operate the platform, display study materials, and support account access. We do not sell personal information.
+            </p>
+          </section>
+          <section className="py-8">
+            <h2 className="text-xl font-semibold text-fuchsia-200">Requests and questions</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              To ask about your information or request account and content removal, email <a className="text-cyan-300 underline underline-offset-4 hover:text-cyan-100" href="mailto:genteryourname296@gmail.com">genteryourname296@gmail.com</a>.
+            </p>
+          </section>
+        </div>
+      </article>
+    </main>
   );
 }

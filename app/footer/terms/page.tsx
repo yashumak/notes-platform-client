@@ -10,22 +10,37 @@
  */
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8">
-        <h1 className="text-3xl font-bold mb-4">Terms & Conditions</h1>
-        <p className="text-gray-700 mb-4">
-          By using Notes Platform, you agree to upload only content you have the
-          right to share and to respect intellectual property rights.
-        </p>
-        <p className="text-gray-700 mb-4">
-          We are not responsible for the accuracy of user-uploaded content. We
-          may remove content that violates these terms or applicable laws.
-        </p>
-        <p className="text-gray-700">
-          Continued use of the platform constitutes acceptance of updates to these
-          terms. If you do not agree, please discontinue use.
-        </p>
-      </div>
-    </div>
+    <main className="min-h-screen px-6 py-30 text-slate-100">
+      <article className="mx-auto max-w-4xl">
+        <header className="border-b border-slate-700 pb-10">
+          <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">Policies</p>
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">Terms of use</h1>
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
+            Guidelines for using NotesHub and contributing material to the student community.
+          </p>
+        </header>
+
+        <div className="divide-y divide-slate-700">
+          <section className="py-8">
+            <h2 className="text-xl font-semibold text-cyan-200">Sharing content</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Upload only materials you created or have permission to share. Respect copyrights, privacy, and the rights of other students.
+            </p>
+          </section>
+          <section className="py-8">
+            <h2 className="text-xl font-semibold text-blue-200">Using shared materials</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Materials are provided for study support. Check their accuracy and suitability before relying on them; user submissions may contain errors or become outdated.
+            </p>
+          </section>
+          <section className="py-8">
+            <h2 className="text-xl font-semibold text-fuchsia-200">Moderation and questions</h2>
+            <p className="mt-3 leading-7 text-slate-300">
+              Content that violates these terms or applicable law may be removed. For questions about these terms, contact <a className="text-cyan-300 underline underline-offset-4 hover:text-cyan-100" href="mailto:genteryourname296@gmail.com">genteryourname296@gmail.com</a>.
+            </p>
+          </section>
+        </div>
+      </article>
+    </main>
   );
 }

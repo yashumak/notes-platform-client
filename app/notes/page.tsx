@@ -1,18 +1,82 @@
-"use client";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+'use client';
+
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+
+interface UploadedNote {
+  _id: string;
+  title: string;
+  description?: string;
+  fileName: string;
+  fileSize?: number;
+  fileUrl?: string;
+  university?: string;
+  course?: string;
+  studyType?: string;
+  year?: number;
+  tags?: string[];
+  createdAt: string;
+}
+
+interface CoreResult {
+  title?: string;
+  urls?: string[];
+  authors?: string[];
+  description?: string;
+}
+
+interface OpenLibraryResult {
+  key?: string;
+  title?: string;
+  author_name?: string[];
+  first_publish_year?: number;
+}
+
+interface NoteFilters {
+  university: string;
+  course: string;
+  subject: string;
+  studyType: string;
+  year: string;
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export default function NotesPage() {
 
 
-  const [universities, setUniversities] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q");
+  console.log("Search Query:", searchQuery);
+
+  const [universities, setUniversities] = useState<string[]>([]);
+  const [courses, setCourses] = useState<string[]>([]);
+  const [coreResults, setCoreResults] = useState<CoreResult[]>([]);
+  const [openLibraryResults, setOpenLibraryResults] = useState<OpenLibraryResult[]>([]);
+  const [loadingExternal, setLoadingExternal] = useState(false);
 
   const [uniSearch, setUniSearch] = useState("");
   const [courseSearch, setCourseSearch] = useState("");
 
   const [showUniList, setShowUniList] = useState(false);
   const [showCourseList, setShowCourseList] = useState(false);
+  const [subjectSearch, setSubjectSearch] = useState("");
+  const [studyTypeFilter, setStudyTypeFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState<NoteFilters>({
+    university: "",
+    course: "",
+    subject: "",
+    studyType: "",
+    year: "",
+  });
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(true);
+  const [notesError, setNotesError] = useState("");
 
   // ✅ Load JSON automatically from public folder
   useEffect(() => {
@@ -25,6 +89,54 @@ export default function NotesPage() {
       .catch((err) => console.error("Error loading JSON:", err));
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("/api/notes", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Could not load uploaded notes");
+        return response.json();
+      })
+      .then((data) => setUploadedNotes(data.notes || []))
+      .catch((error) => {
+        if (error.name !== "AbortError") setNotesError(error.message);
+      })
+      .finally(() => setLoadingNotes(false));
+
+    return () => controller.abort();
+  }, []);
+
+  // Fetch external API data based on searchQuery
+  useEffect(() => {
+    if (searchQuery) {
+      setLoadingExternal(true);
+      const fetchExternalData = async () => {
+        try {
+          // Core.ac.uk API
+          const coreResponse = await fetch(`https://api.core.ac.uk/v3/search/works?q=${encodeURIComponent(searchQuery)}`);
+          const coreData = await coreResponse.json();
+          console.log("Core.ac.uk Results:", coreData);
+          setCoreResults(coreData.results || []);
+
+          // OpenLibrary API
+          const openLibraryResponse = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}`);
+          const openLibraryData = await openLibraryResponse.json();
+          console.log("OpenLibrary.org Results:", openLibraryData);
+          setOpenLibraryResults(openLibraryData.docs || []);
+
+        } catch (error) {
+          console.error("Error fetching external data:", error);
+        } finally {
+          setLoadingExternal(false);
+        }
+      };
+      fetchExternalData();
+    } else {
+      setCoreResults([]);
+      setOpenLibraryResults([]);
+    }
+  }, [searchQuery]);
+
   // Filter logic
   const filteredUniversities = universities.filter((u) =>
     u.toLowerCase().startsWith(uniSearch.toLowerCase())
@@ -34,24 +146,68 @@ export default function NotesPage() {
     c.toLowerCase().startsWith(courseSearch.toLowerCase())
   );
 
+  const filteredNotes = uploadedNotes.filter((note) => {
+    const searchText = [note.title, note.description, note.fileName, ...(note.tags || [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    const queryMatches = !searchQuery || searchText.includes(searchQuery.toLowerCase());
+    const subjectMatches = !appliedFilters.subject || searchText.includes(appliedFilters.subject.toLowerCase());
+
+    return (
+      queryMatches &&
+      subjectMatches &&
+      (!appliedFilters.university || note.university?.toLowerCase().includes(appliedFilters.university.toLowerCase())) &&
+      (!appliedFilters.course || note.course?.toLowerCase().includes(appliedFilters.course.toLowerCase())) &&
+      (!appliedFilters.studyType || note.studyType === appliedFilters.studyType) &&
+      (!appliedFilters.year || String(note.year || "") === appliedFilters.year)
+    );
+  });
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      university: uniSearch.trim(),
+      course: courseSearch.trim(),
+      subject: subjectSearch.trim(),
+      studyType: studyTypeFilter,
+      year: yearFilter,
+    });
+    setFiltersApplied(true);
+    setShowUniList(false);
+    setShowCourseList(false);
+  };
+
+  const clearFilters = () => {
+    setUniSearch("");
+    setCourseSearch("");
+    setSubjectSearch("");
+    setStudyTypeFilter("");
+    setYearFilter("");
+    setAppliedFilters({ university: "", course: "", subject: "", studyType: "", year: "" });
+    setFiltersApplied(false);
+    setShowUniList(false);
+    setShowCourseList(false);
+  };
+
+
+
   return (
-    <div className="flex min-h-screen bg-gray-50 mt-17">
+    <div className="flex min-h-screen mt-17 flex-col text-slate-100 lg:flex-row">
 
       {/* LEFT FILTER SIDEBAR */}
-      <aside className="w-72 bg-white p-5 shadow-md border-r mt-1">
+      <aside className="mt-1 w-full border-b border-slate-700 bg-slate-900/80 p-4 shadow-xl lg:w-72 lg:shrink-0 lg:border-b-0 lg:border-r">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold ">Filter</h2>
-          <button className="text-sm text-blue-600">Clear all</button>
+          <h2 className="text-xl font-bold text-white">Filter</h2>
         </div>
 
         {/* University */}
         <div className="mt-4 relative">
-          <label className="text-gray-700 text-sm font-medium">University</label>
+          <label className="text-slate-300 text-sm font-medium">University</label>
 
           <input
             type="text"
             placeholder="Search & select your college"
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-slate-800 border border-slate-600 text-slate-100 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
             value={uniSearch}
             onChange={(e) => {
               setUniSearch(e.target.value);
@@ -62,12 +218,12 @@ export default function NotesPage() {
 
           {/* Dropdown list */}
           {showUniList && (
-            <ul className="absolute z-20 w-full bg-white border shadow-lg max-h-56 overflow-y-auto rounded-lg mt-1">
+            <ul className="absolute z-20 w-full bg-slate-800 border border-slate-600 shadow-xl max-h-56 overflow-y-auto rounded-lg mt-1">
               {filteredUniversities.length > 0 ? (
                 filteredUniversities.map((uni, i) => (
                   <li
                     key={i}
-                    className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                    className="px-4 py-2 text-slate-200 hover:bg-slate-700 hover:text-cyan-200 cursor-pointer"
                     onClick={() => {
                       setUniSearch(uni);
 
@@ -78,7 +234,7 @@ export default function NotesPage() {
                   </li>
                 ))
               ) : (
-                <li className="px-4 py-2 text-gray-500">No matches found</li>
+                <li className="px-4 py-2 text-slate-400">No matches found</li>
               )}
             </ul>
           )}
@@ -87,12 +243,12 @@ export default function NotesPage() {
 
         {/* Course / Branch */}
         <div className="mt-4 relative">
-          <label className="text-gray-700 text-sm font-medium">Course / Branch</label>
+          <label className="text-slate-300 text-sm font-medium">Course / Branch</label>
 
           <input
             type="text"
             placeholder="Search & select your branch"
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-slate-800 border border-slate-600 text-slate-100 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
             value={courseSearch}
             onChange={(e) => {
               setCourseSearch(e.target.value);
@@ -103,12 +259,12 @@ export default function NotesPage() {
 
           {/* Dropdown list */}
           {showCourseList && (
-            <ul className="absolute z-20 w-full bg-white border shadow-lg max-h-56 overflow-y-auto rounded-lg mt-1">
+            <ul className="absolute z-20 w-full bg-slate-800 border border-slate-600 shadow-xl max-h-56 overflow-y-auto rounded-lg mt-1">
               {filteredCourses.length > 0 ? (
                 filteredCourses.map((course, i) => (
                   <li
                     key={i}
-                    className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                    className="px-4 py-2 text-slate-200 hover:bg-slate-700 hover:text-cyan-200 cursor-pointer"
                     onClick={() => {
                       setCourseSearch(course);
                       setShowCourseList(false);
@@ -118,7 +274,7 @@ export default function NotesPage() {
                   </li>
                 ))
               ) : (
-                <li className="px-4 py-2 text-gray-500">No matches found</li>
+                <li className="px-4 py-2 text-slate-400">No matches found</li>
               )}
             </ul>
           )}
@@ -127,17 +283,19 @@ export default function NotesPage() {
 
         {/* Subject */}
         <div className="mt-4">
-          <label className="text-gray-700 text-sm font-medium">Subject</label>
+          <label className="text-slate-300 text-sm font-medium">Subject</label>
           <input
             type="text"
             placeholder="Enter subject"
-            className="w-full mt-1 p-2 border rounded-lg"
+            className="w-full mt-1 p-2 bg-slate-800 border border-slate-600 text-slate-100 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+            value={subjectSearch}
+            onChange={(event) => setSubjectSearch(event.target.value)}
           />
         </div>
 
         {/* Study Material Type */}
         <div className="mt-5">
-          <label className="text-gray-700 text-sm font-medium">
+          <label className="text-slate-300 text-sm font-medium">
             Study Material Type
           </label>
 
@@ -145,7 +303,10 @@ export default function NotesPage() {
             {["Notes", "Assignments", "Papers", "Que Banks", "PPT", "Reports"].map((t) => (
               <button
                 key={t}
-                className="px-3 py-1 text-sm border rounded-full hover:bg-gray-100"
+                type="button"
+                aria-pressed={studyTypeFilter === t}
+                onClick={() => setStudyTypeFilter(studyTypeFilter === t ? "" : t)}
+                className={`px-3 py-1 text-sm rounded-full border transition-colors ${studyTypeFilter === t ? "border-cyan-400 bg-cyan-400/15 text-cyan-200" : "border-slate-600 text-slate-200 hover:border-cyan-400 hover:bg-slate-800 hover:text-cyan-200"}`}
               >
                 {t}
               </button>
@@ -155,16 +316,16 @@ export default function NotesPage() {
 
         {/* Academic Year (Dropdown) */}
         <div className="mt-5">
-          <label className="text-gray-700 text-sm font-medium">
+          <label className="text-slate-300 text-sm font-medium">
             Academic Year
           </label>
 
-          <select className="w-full mt-2 p-2 border rounded-lg">
+          <select value={yearFilter} onChange={(event) => setYearFilter(event.target.value)} className="w-full mt-2 p-2 bg-slate-800 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400">
             <option value="">Select Year</option>
 
             {/* Generate last 10 years */}
             {Array.from({ length: 12 }, (_, i) => {
-              const year = 2025 - i;
+              const year = new Date().getFullYear() - i;
               return (
                 <option key={year} value={year}>
                   {year}
@@ -172,6 +333,25 @@ export default function NotesPage() {
               );
             })}
           </select>
+        </div>
+
+        <div className="mt-6 flex gap-2">
+          <button
+            type="button"
+            onClick={applyFilters}
+            className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+          >
+            Search
+          </button>
+          {filtersApplied && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="rounded-lg border border-slate-600 px-4 py-2.5 font-medium text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-200"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
 
@@ -187,40 +367,163 @@ export default function NotesPage() {
       </aside>
 
       {/* RIGHT SIDE NOTES LIST */}
-      <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold mb-4">Documents & Flashcards</h1>
-        <p className="text-gray-500 mb-6">62004 results</p>
+      <main className="min-w-0 flex-1 p-4 sm:p-6">
+        <h1 className="text-3xl font-bold text-white mb-6">Notes & Study Materials</h1>
 
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((item) => (
-            <Link
-              href="/notes/1"
-              key={item}
-              className="flex items-center justify-between bg-white p-4 rounded-lg shadow hover:shadow-md transition cursor-pointer"
-            >
-              {/* Left Section */}
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gray-200 rounded-lg"></div>
+        {searchQuery && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-slate-100 mb-4">
+              Search Results for &quot;{searchQuery}&quot;
+            </h2>
+            {loadingExternal ? (
+              <p className="text-slate-300">Loading external resources...</p>
+            ) : (
+              <div>
+                {coreResults.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-medium text-cyan-200 mb-3">
+                      Core.ac.uk Results
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {coreResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className="bg-slate-800/80 border border-slate-700 p-4 rounded-lg shadow-lg"
+                        >
+                          <h4 className="font-bold text-lg">
+                            <a
+                              href={result.urls?.[0]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-300 hover:text-cyan-200 hover:underline"
+                            >
+                              {result.title}
+                            </a>
+                          </h4>
+                          <p className="text-sm text-slate-300">
+                            {result.authors?.join(", ")}
+                          </p>
+                          <p className="text-sm text-slate-400 mt-2">
+                            {result.description?.substring(0, 150)}...
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                <div>
-                  <h3 className="font-semibold text-lg">NOTES {item}.pdf</h3>
-                  <p className="text-sm text-blue-700">
-                    Computer Engineering • RTMNU
-                  </p>
+                {openLibraryResults.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-medium text-cyan-200 mb-3">
+                      OpenLibrary.org Results
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {openLibraryResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className="bg-slate-800/80 border border-slate-700 p-4 rounded-lg shadow-lg"
+                        >
+                          <h4 className="font-bold text-lg">
+                            <a
+                              href={`https://openlibrary.org${result.key}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-300 hover:text-cyan-200 hover:underline"
+                            >
+                              {result.title}
+                            </a>
+                          </h4>
+                          <p className="text-sm text-slate-300">
+                            {result.author_name?.join(", ")}
+                          </p>
+                          <p className="text-sm text-slate-400 mt-2">
+                            First Publish Year: {result.first_publish_year}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {coreResults.length === 0 &&
+                  openLibraryResults.length === 0 && (
+                    <p className="text-slate-300">No external resources found for &quot;{searchQuery}&quot;.</p>
+                  )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <section>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              {/* <h2 className="text-2xl font-semibold text-slate-100">Uploaded Notes</h2>
+              <p className="mt-1 text-sm text-slate-400">Study materials shared by the community</p> */}
+            </div>
+            <p className="text-sm text-slate-400">{filteredNotes.length} {filteredNotes.length === 1 ? "note" : "notes"}</p>
+          </div>
+
+          {loadingNotes && <p className="text-slate-300">Loading uploaded notes...</p>}
+          {!loadingNotes && notesError && <p className="text-rose-300">{notesError}</p>}
+          {!loadingNotes && !notesError && filteredNotes.length === 0 && (
+            <p className="rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
+              {uploadedNotes.length ? "No notes match these filters." : "No notes have been uploaded yet."}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {filteredNotes.map((note) => (
+              <article key={note._id} className="flex min-w-0 flex-col rounded-lg border border-slate-700 bg-slate-800/80 p-5 shadow-lg transition-colors hover:border-cyan-500/70">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <span className="truncate rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+                    {note.studyType || "Study material"}
+                  </span>
+                  {note.year && <span className="shrink-0 text-xs text-slate-400">{note.year}</span>}
                 </div>
-              </div>
+                <h3 className="wrap-break-word text-lg font-semibold text-white">{note.title}</h3>
+                {note.description && <p className="mt-2 line-clamp-3 text-sm text-slate-300">{note.description}</p>}
 
-              {/* Right Section */}
-              <div className="flex items-center gap-6 text-sm text-gray-600">
-                <p>2 years ago</p>
+                <dl className="mt-4 space-y-2 text-sm">
+                  {note.university && (
+                    <div className="flex gap-2">
+                      <dt className="shrink-0 text-slate-500">University</dt>
+                      <dd className="min-w-0 truncate text-slate-300">{note.university}</dd>
+                    </div>
+                  )}
+                  {note.course && (
+                    <div className="flex gap-2">
+                      <dt className="shrink-0 text-slate-500">Course</dt>
+                      <dd className="min-w-0 truncate text-slate-300">{note.course}</dd>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <dt className="shrink-0 text-slate-500">File</dt>
+                    <dd className="min-w-0 truncate text-slate-300">{note.fileName}</dd>
+                  </div>
+                  {note.fileSize !== undefined && (
+                    <div className="flex gap-2">
+                      <dt className="shrink-0 text-slate-500">Size</dt>
+                      <dd className="text-slate-300">{formatFileSize(note.fileSize)}</dd>
+                    </div>
+                  )}
+                </dl>
 
-                <button className="px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Download
-                </button>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-700 pt-4">
+                  <time className="text-xs text-slate-500" dateTime={note.createdAt}>
+                    {new Date(note.createdAt).toLocaleDateString()}
+                  </time>
+                  <a
+                    href={note.fileUrl || `/api/notes/${note._id}/file`}
+                    download={note.fileName}
+                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500"
+                  >
+                    Download
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

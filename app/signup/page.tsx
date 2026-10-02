@@ -56,8 +56,8 @@ export default function SignupPage() {
     if (!validateForm()) return;
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
+      await axios.post(
+        "/api/auth/register",
         {
           name,
           email,
@@ -65,74 +65,78 @@ export default function SignupPage() {
           university,
           course: branch,
           year,
-        }
+        },
+        { withCredentials: true }
       );
 
-      alert("Registration successful!");
-      window.location.href = "/";
-    } catch (error: any) {
+      window.location.href = "/dashboard";
+    } catch (error: unknown) {
       console.error(error);
-      alert(error?.response?.data?.message || "Registration failed");
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      alert(message || "Registration failed");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 mt-10">
-      <div className="bg-white shadow-md rounded-xl p-8 max-w-4xl w-full">
-        <h1 className="text-3xl font-bold text-center mb-4">Create Account</h1>
-        <p className="text-center text-gray-600 mb-6">
-          Fill the details below
+    <div className="mt-10 flex min-h-screen items-center justify-center px-4 py-12 sm:px-6">
+      <div className="w-full max-w-4xl rounded-xl border border-slate-700 border-t-2 border-t-fuchsia-400 bg-slate-900/90 p-5 shadow-2xl shadow-slate-950/40 sm:p-8">
+        <p className="mb-3 text-center text-sm font-semibold uppercase text-fuchsia-300">Join NotesHub</p>
+        <h1 className="mb-3 text-center text-3xl font-bold text-white">Create Account</h1>
+        <p className="mb-8 text-center text-slate-400">
+          Set up your student profile to share and discover study materials.
         </p>
 
         {/* 2 Column Form */}
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-x-7 gap-y-6 md:grid-cols-2">
 
           {/* Full Name */}
           <div>
-            <label className="font-medium">Full Name</label>
+            <label className="font-medium text-slate-200">Full Name</label>
             <input
               type="text"
-              className="w-full p-3 mt-1 border rounded-md"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               value={name}
               onChange={(e) => setname(e.target.value)}
             />
-            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+            {errors.name && <p className="mt-2 text-sm text-rose-300">{errors.name}</p>}
           </div>
 
           {/* Email */}
           <div>
-            <label className="font-medium">Email</label>
+            <label className="font-medium text-slate-200">Email</label>
             <input
               type="email"
-              className="w-full p-3 mt-1 border rounded-md"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+            {errors.email && <p className="mt-2 text-sm text-rose-300">{errors.email}</p>}
           </div>
 
           {/* Password */}
           <div>
-            <label className="font-medium">Password</label>
+            <label className="font-medium text-slate-200">Password</label>
             <input
               type="password"
-              className="w-full p-3 mt-1 border rounded-md"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password}</p>
+              <p className="mt-2 text-sm text-rose-300">{errors.password}</p>
             )}
             {password.length > 0 && password.length < 7 && (
-              <p className="text-red-500 text-sm">Password must be at least 7 characters.</p>
+              <p className="mt-2 text-sm text-rose-300">Password must be at least 7 characters.</p>
             )}
           </div>
 
           {/* Year */}
           <div>
-            <label className="font-medium">Year</label>
+            <label className="font-medium text-slate-200">Year</label>
             <select
-              className="w-full p-3 mt-1 border rounded-md"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               value={year}
               onChange={(e) => setYear(e.target.value)}
             >
@@ -145,13 +149,13 @@ export default function SignupPage() {
             </select>
 
             {errors.year && (
-              <p className="text-red-500 text-sm">{errors.year}</p>
+              <p className="mt-2 text-sm text-rose-300">{errors.year}</p>
             )}
           </div>
 
           {/* University */}
           <div className="col-span-1 md:col-span-2">
-            <label className="font-medium">University/Collage</label>
+            <label className="font-medium text-slate-200">University/College</label>
             <input
               type="text"
               value={uniSearch}
@@ -160,12 +164,12 @@ export default function SignupPage() {
                 setShowUniList(true);
               }}
               onFocus={() => setShowUniList(true)}
-              className="w-full p-3 mt-1 border rounded-md"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               placeholder="Search university"
             />
 
             {showUniList && (
-              <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
+              <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
                 {universities
                   .filter((u) =>
                     u.toLowerCase().includes(uniSearch.toLowerCase())
@@ -173,7 +177,7 @@ export default function SignupPage() {
                   .map((u, i) => (
                     <li
                       key={i}
-                      className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                      className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
                       onClick={() => {
                         setUniSearch(u);
                         setUniversity(u);
@@ -186,13 +190,13 @@ export default function SignupPage() {
               </ul>
             )}
             {errors.university && (
-              <p className="text-red-500 text-sm">{errors.university}</p>
+              <p className="mt-2 text-sm text-rose-300">{errors.university}</p>
             )}
           </div>
 
           {/* Branch */}
           <div className="col-span-1 md:col-span-2">
-            <label className="font-medium">Branch</label>
+            <label className="font-medium text-slate-200">Branch</label>
             <input
               type="text"
               value={branchSearch}
@@ -201,12 +205,12 @@ export default function SignupPage() {
                 setShowBranchList(true);
               }}
               onFocus={() => setShowBranchList(true)}
-              className="w-full p-3 mt-1 border rounded-md"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               placeholder="Search branch"
             />
 
             {showBranchList && (
-              <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
+              <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
                 {branches
                   .filter((b) =>
                     b.toLowerCase().includes(branchSearch.toLowerCase())
@@ -214,7 +218,7 @@ export default function SignupPage() {
                   .map((b, i) => (
                     <li
                       key={i}
-                      className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                      className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
                       onClick={() => {
                         setBranchSearch(b);
                         setBranch(b);
@@ -227,7 +231,7 @@ export default function SignupPage() {
               </ul>
             )}
             {errors.branch && (
-              <p className="text-red-500 text-sm">{errors.branch}</p>
+              <p className="mt-2 text-sm text-rose-300">{errors.branch}</p>
             )}
           </div>
 
@@ -235,14 +239,14 @@ export default function SignupPage() {
           <div className="col-span-1 md:col-span-2">
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition"
+              className="w-full rounded-lg bg-linear-to-r from-cyan-500 to-blue-600 p-3 font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
               Register
             </button>
 
-            <p className="mt-3 text-center">
+            <p className="mt-5 text-center text-sm text-slate-400">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 font-medium">
+              <Link href="/login" className="font-medium text-cyan-300 transition-colors hover:text-cyan-200 hover:underline">
                 Login
               </Link>
             </p>

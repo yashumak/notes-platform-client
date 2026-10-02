@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface UploadResponse {
   success: boolean;
@@ -9,6 +10,7 @@ interface UploadResponse {
 }
 
 const UploadNote: React.FC = () => {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -77,16 +79,18 @@ const UploadNote: React.FC = () => {
     formData.append("year", year);
 
     try {
-      const response = await fetch("/api/notes/upload", {
+      // Use Next.js API rewrite so auth cookie and backend stay on same origin
+      const response = await fetch(`/api/notes/upload`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       const data: UploadResponse = await response.json();
       console.log(data);
 
       if (data.success) {
-        alert("Upload successful!");
+        router.push("/notes");
       } else {
         alert(data.message || "Upload failed!");
       }
@@ -99,168 +103,178 @@ const UploadNote: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg mt-20">
-      <h2 className="text-3xl font-bold mb-6 text-center">Upload Study Material</h2>
+    <div className="mx-auto mt-20 w-full max-w-5xl px-4 pb-20 text-slate-100 sm:px-6">
+      <header className="mb-8 text-center">
+        <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">Contribute to NotesHub</p>
+        <h1 className="text-3xl font-bold text-white sm:text-4xl">Upload Study Material</h1>
+        <p className="mx-auto mt-3 max-w-xl text-slate-300">
+          Share notes, assignments, and course resources with students in your community.
+        </p>
+      </header>
 
-      {/* GRID START */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="rounded-xl border border-slate-700 bg-slate-900/80 p-5 shadow-2xl shadow-slate-950/30 sm:p-8">
 
-        {/* File Input */}
-        <div className="col-span-2">
-          <label className="text-gray-700 text-sm font-medium">Select File</label>
-          <input
-            type="file"
-            className="w-full mt-2 mb-4 p-2 border rounded-lg"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
+        {/* GRID START */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* File Input */}
+          <div className="col-span-2">
+            <label className="text-sm font-medium text-slate-200">Select File</label>
+            <input
+              type="file"
+              className="mt-2 mb-4 w-full rounded-lg border border-slate-600 bg-slate-800 p-2 text-sm text-slate-200 file:mr-4 file:rounded-md file:border-0 file:bg-slate-700 file:px-4 file:py-2 file:font-medium file:text-cyan-100 hover:file:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+            <p className="-mt-2 text-xs text-slate-400">{file ? file.name : "Choose a file to share"}</p>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="text-sm font-medium text-slate-200">Title</label>
+            <input
+              type="text"
+              placeholder="Enter title"
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* Study Type */}
+          <div>
+            <label className="text-sm font-medium text-slate-200">
+              Study Material Type
+            </label>
+            <select
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+              value={studyType}
+              onChange={(e) => setStudyType(e.target.value)}
+            >
+              <option value="">Select Type</option>
+              {studyTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* University */}
+          <div>
+            <label className="text-sm font-medium text-slate-200">University/College</label>
+            <input
+              type="text"
+              value={uniSearch}
+              onChange={(e) => {
+                setUniSearch(e.target.value);
+                setShowUniList(true);
+              }}
+              onFocus={() => setShowUniList(true)}
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+              placeholder="Search university"
+            />
+
+            {showUniList && (
+              <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
+                {universities
+                  .filter((u) =>
+                    u.toLowerCase().includes(uniSearch.toLowerCase())
+                  )
+                  .map((u, i) => (
+                    <li
+                      key={i}
+                      className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
+                      onClick={() => {
+                        setUniSearch(u);
+                        setUniversity(u);
+                        setShowUniList(false);
+                      }}
+                    >
+                      {u}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Branch */}
+          <div>
+            <label className="text-sm font-medium text-slate-200">Branch</label>
+            <input
+              type="text"
+              value={branchSearch}
+              onChange={(e) => {
+                setBranchSearch(e.target.value);
+                setShowBranchList(true);
+              }}
+              onFocus={() => setShowBranchList(true)}
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+              placeholder="Search branch"
+            />
+
+            {showBranchList && (
+              <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
+                {branches
+                  .filter((b) =>
+                    b.toLowerCase().includes(branchSearch.toLowerCase())
+                  )
+                  .map((b, i) => (
+                    <li
+                      key={i}
+                      className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
+                      onClick={() => {
+                        setBranchSearch(b);
+                        setBranch(b);
+                        setShowBranchList(false);
+                      }}
+                    >
+                      {b}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Year */}
+          <div>
+            <label className="text-sm font-medium text-slate-200"></label>
+            <select
+              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              <option value="">Select Year</option>
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description (Full Width) */}
+          <div className="col-span-2">
+            <label className="text-sm font-medium text-slate-200">Description</label>
+            <textarea
+              placeholder="Enter description"
+              className="mt-2 min-h-32 w-full resize-y rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
         </div>
+        {/* GRID END */}
 
-        {/* Title */}
-        <div>
-          <label className="text-gray-700 text-sm font-medium">Title</label>
-          <input
-            type="text"
-            placeholder="Enter title"
-            className="w-full mt-2 p-2 border rounded-lg"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-
-        {/* Study Type */}
-        <div>
-          <label className="text-gray-700 text-sm font-medium">
-            Study Material Type
-          </label>
-          <select
-            className="w-full mt-2 p-2 border rounded-lg"
-            value={studyType}
-            onChange={(e) => setStudyType(e.target.value)}
-          >
-            <option value="">Select Type</option>
-            {studyTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* University */}
-        <div>
-          <label className="text-gray-700 text-sm font-medium">University/College</label>
-          <input
-            type="text"
-            value={uniSearch}
-            onChange={(e) => {
-              setUniSearch(e.target.value);
-              setShowUniList(true);
-            }}
-            onFocus={() => setShowUniList(true)}
-            className="w-full p-3 mt-1 border rounded-md"
-            placeholder="Search university"
-          />
-
-          {showUniList && (
-            <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
-              {universities
-                .filter((u) =>
-                  u.toLowerCase().includes(uniSearch.toLowerCase())
-                )
-                .map((u, i) => (
-                  <li
-                    key={i}
-                    className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
-                    onClick={() => {
-                      setUniSearch(u);
-                      setUniversity(u);
-                      setShowUniList(false);
-                    }}
-                  >
-                    {u}
-                  </li>
-                ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Branch */}
-        <div>
-          <label className="text-gray-700 text-sm font-medium">Branch</label>
-          <input
-            type="text"
-            value={branchSearch}
-            onChange={(e) => {
-              setBranchSearch(e.target.value);
-              setShowBranchList(true);
-            }}
-            onFocus={() => setShowBranchList(true)}
-            className="w-full p-3 mt-1 border rounded-md"
-            placeholder="Search branch"
-          />
-
-          {showBranchList && (
-            <ul className="border rounded-md mt-2 max-h-40 overflow-y-auto bg-white shadow-lg">
-              {branches
-                .filter((b) =>
-                  b.toLowerCase().includes(branchSearch.toLowerCase())
-                )
-                .map((b, i) => (
-                  <li
-                    key={i}
-                    className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
-                    onClick={() => {
-                      setBranchSearch(b);
-                      setBranch(b);
-                      setShowBranchList(false);
-                    }}
-                  >
-                    {b}
-                  </li>
-                ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Year */}
-        <div>
-          <label className="text-gray-700 text-sm font-medium">Academic Year</label>
-          <select
-            className="w-full mt-2 p-2 border rounded-lg"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-          >
-            <option value="">Select Year</option>
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Description (Full Width) */}
-        <div className="col-span-2">
-          <label className="text-gray-700 text-sm font-medium">Description</label>
-          <textarea
-            placeholder="Enter description"
-            className="w-full mt-2 p-3 border rounded-lg"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
+        {/* Button */}
+        <button
+          onClick={handleUpload}
+          disabled={loading}
+          className="mt-7 w-full rounded-lg bg-linear-to-r from-cyan-500 to-blue-600 py-3 font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-700"
+        >
+          {loading ? "Uploading..." : "Upload study material"}
+        </button>
       </div>
-      {/* GRID END */}
-
-      {/* Button */}
-      <button
-        onClick={handleUpload}
-        disabled={loading}
-        className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg mt-6 hover:bg-blue-700 disabled:bg-gray-400"
-      >
-        {loading ? "Uploading..." : "Upload"}
-      </button>
     </div>
   );
 };

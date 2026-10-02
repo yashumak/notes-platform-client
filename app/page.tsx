@@ -1,174 +1,157 @@
 "use client";
-import { useEffect } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+interface NoteSummary {
+  university?: string;
+  studyType?: string;
+}
+
 export default function Home() {
+  const [notes, setNotes] = useState<NoteSummary[]>([]);
+
   useEffect(() => {
-    // Staggered fade-up animation
-    const elements = document.querySelectorAll(".fade-up");
-    elements.forEach((el, i) => {
-      setTimeout(() => el.classList.add("opacity-100", "translate-y-0"), i * 150);
-    });
-    // Animate counters when they enter viewport
-    const counters = document.querySelectorAll(".count-up");
-    const animateCounters = () => {
-      counters.forEach((counter) => {
-        const target = parseInt(counter.getAttribute("data-target") || "0", 10);
-        const increment = target / 100;
-        let current = 0;
-        const update = () => {
-          if (current < target) {
-            current += increment;
-            counter.textContent = Math.ceil(current).toLocaleString() + "+";
-            requestAnimationFrame(update);
-          } else {
-            counter.textContent = target.toLocaleString() + "+";
-          }
-        };
-        update();
+    const controller = new AbortController();
+    fetch("/api/notes", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load note totals");
+        return response.json();
+      })
+      .then((data) => setNotes(data.notes || []))
+      .catch((error) => {
+        if (error.name !== "AbortError") console.error("Could not load note totals:", error);
       });
-    };
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            animateCounters();
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 }
+
+    const elements = document.querySelectorAll(".fade-up");
+    const timers = Array.from(elements, (element, index) =>
+      window.setTimeout(() => element.classList.add("opacity-100", "translate-y-0"), index * 100)
     );
-    const statsSection = document.querySelector("#stats");
-    if (statsSection) observer.observe(statsSection);
-    return () => observer.disconnect();
+
+    return () => {
+      controller.abort();
+      timers.forEach(window.clearTimeout);
+    };
   }, []);
+
+  const universityCount = new Set(notes.map((note) => note.university).filter(Boolean)).size;
+  const materialCount = new Set(notes.map((note) => note.studyType).filter(Boolean)).size;
+
   return (
-    <div className="px-6 py-12 text-white">
-      <div className="max-w-6xl mx-auto">
-        {/* Intro Section */}
-        <section className="text-center py-16 fade-up opacity-0 translate-y-6 transition-all duration-700">
-          <h1 className="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-fuchsia-500 mb-4 animate-pulse">
-            Share & Download Notes Easily
+    <div className="text-white">
+      <section className="relative isolate flex min-h-[560px] items-center overflow-hidden px-6 py-20 md:min-h-[640px] md:py-24">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-20 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=2000&q=85')" }}
+        />
+        <div className="absolute inset-0 -z-10 bg-slate-950/75" />
+        <div className="mx-auto w-full max-w-6xl fade-up translate-y-4 opacity-0 transition-all duration-700">
+          <p className="mb-7 inline-flex items-center gap-2 border-l-2 border-cyan-400 pl-3 text-sm font-semibold uppercase text-cyan-200">
+            NotesHub · Student study library
+          </p>
+          <h1 className="max-w-3xl text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
+            Study notes, <span className="text-cyan-300">shared by students.</span>
           </h1>
-          <p className="text-slate-300 mb-6 text-lg">
-            A platform created for students to upload, share, and learn from
-            high-quality study materials across all universities.
+          <p className="mt-7 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
+            Find course notes, past papers, assignments, and presentations from students across universities.
           </p>
-          <div className="flex justify-center gap-4">
-            <a href="/upload" className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl shadow-lg hover:scale-105 hover:shadow-cyan-400/40 transition transform duration-300">
-              Upload Notes
-            </a>
-            <a href="/notes" className="px-6 py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white rounded-xl shadow-lg hover:scale-105 hover:shadow-fuchsia-400/40 transition transform duration-300">
-              Browse Notes
-            </a>
+
+          <form action="/notes" method="get" className="mt-10 flex max-w-2xl flex-col gap-4 sm:flex-row">
+            <label className="sr-only" htmlFor="home-note-search">Search study materials</label>
+            <input
+              id="home-note-search"
+              name="q"
+              type="search"
+              placeholder="Search a subject, course, or topic"
+              className="min-w-0 flex-1 rounded-lg border border-white/20 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-400 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/50"
+            />
+            <button className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950">
+              Search notes
+            </button>
+          </form>
+
+          <div className="mt-7 flex flex-wrap items-center gap-4">
+            <Link href="/upload" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:-translate-y-0.5 hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950">
+              Upload study material
+            </Link>
+            <Link href="/notes" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-fuchsia-300/60 bg-slate-950/50 px-5 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:-translate-y-0.5 hover:border-fuchsia-300 hover:bg-fuchsia-500/15 focus:outline-none focus:ring-2 focus:ring-fuchsia-300 focus:ring-offset-2 focus:ring-offset-slate-950">
+              Browse all notes
+            </Link>
           </div>
-        </section>
-        {/* How to Upload Notes */}
-        <section className="mt-20 fade-up opacity-0 translate-y-6 transition-all duration-700">
-          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-fuchsia-500 mb-6">How to Upload Notes?</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        </div>
+      </section>
+
+      <section id="stats" className="border-y border-slate-700 bg-slate-950/35 px-6 py-10 md:py-12">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-0">
+          {[
+            { label: "Shared study materials", value: notes.length, color: "text-cyan-300" },
+            { label: "Universities represented", value: universityCount, color: "text-blue-300" },
+            { label: "Material types", value: materialCount, color: "text-fuchsia-300" },
+          ].map((stat, index) => (
+            <div key={stat.label} className={`flex items-center gap-5 sm:px-8 ${index > 0 ? "sm:border-l sm:border-slate-700" : "sm:pl-0"}`}>
+              <p className={`min-w-16 text-4xl font-bold tabular-nums ${stat.color}`}>{stat.value}</p>
+              <p className="max-w-36 text-sm leading-6 text-slate-300">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
+        <section className="fade-up translate-y-4 opacity-0 transition-all duration-700">
+          <div className="mb-11 flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="mb-2 text-sm font-semibold uppercase text-cyan-300">Getting started</p>
+              <h2 className="text-3xl font-bold text-white">From search to study session</h2>
+            </div>
+            <p className="max-w-md text-slate-300">A simple place to find helpful material or share what you’ve learned.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {[
-              { title: "Step 1", text: "Login or create your student account." },
-              { title: "Step 2", text: "Upload your Notes / Assignments / Papers." },
-              { title: "Step 3", text: "Get visibility and help thousands of students." },
-            ].map((step, i) => (
-              <div
-                key={i}
-                className="p-5 rounded-2xl shadow-lg bg-slate-800/50 backdrop-blur border border-slate-700 hover:border-cyan-400 hover:-translate-y-2 transition-all duration-300"
-              >
-                <h3 className="font-bold text-xl text-cyan-300">{step.title}</h3>
-                <p className="text-slate-300 mt-2">{step.text}</p>
-              </div>
+              { number: "01", title: "Find your subject", text: "Search notes and materials by topic or course.", accent: "border-cyan-400" },
+              { number: "02", title: "Choose a resource", text: "Compare notes, assignments, papers, and presentations.", accent: "border-blue-400" },
+              { number: "03", title: "Share your work", text: "Upload useful materials for students in your community.", accent: "border-fuchsia-400" },
+            ].map((step) => (
+              <article key={step.number} className={`min-h-44 rounded-md border border-slate-700 border-t-2 ${step.accent} bg-slate-800/60 p-7 transition-colors hover:bg-slate-800`}>
+                <p className="text-sm font-bold text-slate-500">{step.number}</p>
+                <h3 className="mt-3 text-lg font-semibold text-white">{step.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-300">{step.text}</p>
+              </article>
             ))}
           </div>
         </section>
-        {/* Purpose Section */}
-        <section className="mt-20 fade-up opacity-0 translate-y-6 transition-all duration-700">
-          <h2 className="text-3xl font-semibold mb-4">Purpose of This Platform</h2>
-          <p className="text-white text-lg leading-relaxed">
-            The main purpose of this application is to build a centralized hub for educational
-            content where students from different universities can share Notes, Question Banks,
-            Assignments, Previous Year Papers, PPTs, Reports, Research Papers, and Project
-            Documents.
-            <br />
-            This platform promotes collaborative learning and helps students access important
-            study resources anytime, anywhere.
-          </p>
-        </section>
 
-        {/* Total Notes Count */}
-        <section id="stats" className="mt-20 fade-up opacity-0 translate-y-6 transition-all duration-700">
-          <h2 className="text-3xl font-semibold mb-6">Total Study Resources</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+        <section className="mt-24 border-t border-slate-700 pt-16 fade-up translate-y-4 opacity-0 transition-all duration-700">
+          <p className="mb-2 text-sm font-semibold uppercase text-fuchsia-300">A shared campus library</p>
+          <h2 className="text-3xl font-bold text-white">Resources for every part of the semester</h2>
+          <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-7 text-sm sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { label: "Notes", count: 1240 },
-              { label: "Papers", count: 540 },
-              { label: "Other Materials", count: 780 },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="p-6 border rounded-xl shadow-sm bg-white hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
-              >
-                <p className="text-4xl font-bold text-blue-600 count-up" data-target={item.count}>
-                  0
-                </p>
-                <p className="text-lg text-gray-700 mt-2">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Colleges & Universities */}
-        <section className="mt-20 fade-up opacity-0 translate-y-6 transition-all duration-700">
-          <h2 className="text-3xl font-semibold mb-4">Supported Universities</h2>
-
-          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-700 font-medium">
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-blue-100 hover:scale-105 transition transform duration-300">
-              RTMNU – Nagpur University
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-blue-100 hover:scale-105 transition transform duration-300">
-              Savitribai Phule Pune University
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-blue-100 hover:scale-105 transition transform duration-300">
-              Mumbai University
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-blue-100 hover:scale-105 transition transform duration-300">
-              Delhi University
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-blue-100 hover:scale-105 transition transform duration-300">
-              Amravati University
-            </li>
-            <li className="p-3 bg-gray-100 rounded-md hover:bg-blue-100 hover:scale-105 transition transform duration-300">
-              More Universities Coming Soon…
-            </li>
-          </ul>
-        </section>
-
-        {/* Types of Notes */}
-        <section className="mt-20 fade-up opacity-0 translate-y-6 transition-all duration-700">
-          <h2 className="text-3xl font-semibold mb-6">What Type of Materials We Support?</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
+              "Class notes",
               "Assignments",
-              "Class Notes",
-              "PPT Presentations",
+              "Previous year papers",
+              "Question banks",
+              "Presentations",
+              "Research papers",
               "Reports",
+              "Project documents",
               "Posters",
-              "Research Papers",
-              "Mini Project Content",
-              "Mega Project Content",
-              "Question Banks",
-              "Previous Year Papers",
-            ].map((type, i) => (
-              <div
-                key={i}
-                className="p-4 border rounded-lg shadow-sm bg-white hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-gray-800 font-medium"
-              >
+              "Revision guides",
+            ].map((type, index) => (
+              <div key={type} className="flex min-h-16 items-start gap-3 border-t border-slate-700 py-5 text-slate-200">
+                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${index % 3 === 0 ? "bg-cyan-400" : index % 3 === 1 ? "bg-blue-400" : "bg-fuchsia-400"}`} />
                 {type}
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="mt-24 flex flex-col items-start justify-between gap-8 border-t border-slate-700 pt-14 sm:flex-row sm:items-center fade-up translate-y-4 opacity-0 transition-all duration-700">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Have something worth sharing?</h2>
+            <p className="mt-3 text-slate-300">Add your notes to the library and help another student prepare.</p>
+          </div>
+          <Link href="/upload" className="shrink-0 rounded-lg bg-fuchsia-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-300 focus:ring-offset-2 focus:ring-offset-slate-950">
+            Upload notes
+          </Link>
         </section>
       </div>
     </div>
