@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Notes platform icon">
+  <rect width="256" height="256" fill="#05070d"/>
+  <g transform="translate(18 18)">
+    <rect x="22" y="19" width="180" height="176" rx="12" fill="#7a7a7a"/>
+    <rect x="0" y="19" width="32" height="176" rx="10" fill="#f0b31d"/>
+    <g fill="none" stroke="#f0b31d" stroke-width="8" stroke-linecap="round">
+      <path d="M42 36v24"/>
+      <path d="M74 36v24"/>
+      <path d="M106 36v24"/>
+      <path d="M138 36v24"/>
+      <path d="M170 36v24"/>
+    </g>
+    <circle cx="113" cy="119" r="58" fill="none" stroke="#1d1d1d" stroke-width="10"/>
+    <g transform="translate(90 92)">
+      <rect x="0" y="0" width="56" height="12" rx="4" fill="#202020" transform="rotate(32 28 6)"/>
+      <rect x="40" y="7" width="22" height="12" rx="4" fill="#202020" transform="rotate(32 51 13)"/>
+      <path d="M18 28 L84 30 L80 38 L12 36 Z" fill="#202020" transform="rotate(32 48 33)"/>
+      <rect x="0" y="-4" width="44" height="10" rx="3" fill="#202020" transform="rotate(32 22 1)"/>
+      <path d="M58 24 L75 18 L82 24 L65 30 Z" fill="#202020" transform="rotate(32 70 21)"/>
+    </g>
+  </g>
+</svg>
