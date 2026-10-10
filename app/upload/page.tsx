@@ -89,6 +89,11 @@ const UploadNote: React.FC = () => {
       const data: UploadResponse = await response.json();
       console.log(data);
 
+      if (response.status === 401) {
+        router.replace("/login?redirect=%2Fupload");
+        return;
+      }
+
       if (data.success) {
         router.push("/notes");
       } else {

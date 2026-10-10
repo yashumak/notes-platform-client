@@ -31,8 +31,14 @@ export default function LoginPage() {
 
       alert(response.data.message || "Login successful!");
 
-      // Redirect after login
-      window.location.href = "/";
+      const requestedDestination = new URLSearchParams(window.location.search).get("redirect");
+      const destinationUrl = requestedDestination
+        ? new URL(requestedDestination, window.location.origin)
+        : null;
+      const destination = destinationUrl?.origin === window.location.origin
+        ? `${destinationUrl.pathname}${destinationUrl.search}${destinationUrl.hash}`
+        : "/";
+      window.location.href = destination;
     } catch (error) {
       if (error.response?.data?.message) {
         setErrors({ api: error.response.data.message });

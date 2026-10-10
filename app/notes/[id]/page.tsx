@@ -225,3 +225,12 @@
 //     </div>
 //   );
 // }
+
+export default function NoteDetailsPage() {
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-bold">Note Details</h1>
+      <p>Note details will appear here.</p>
+    </main>
+  );
+}
