@@ -1,17 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import axios from "axios";
+
+interface LoginErrors {
+  email?: string;
+  password?: string;
+  api?: string;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
-    const newErrors = {};
+    const newErrors: LoginErrors = {};
 
     if (!email) newErrors.email = "Email is required";
     if (!password) newErrors.password = "Password is required";
@@ -39,12 +45,11 @@ export default function LoginPage() {
         ? `${destinationUrl.pathname}${destinationUrl.search}${destinationUrl.hash}`
         : "/";
       window.location.href = destination;
-    } catch (error) {
-      if (error.response?.data?.message) {
-        setErrors({ api: error.response.data.message });
-      } else {
-        setErrors({ api: "Something went wrong" });
-      }
+    } catch (error: unknown) {
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      setErrors({ api: message || "Something went wrong" });
     } finally {
       setLoading(false);
     }

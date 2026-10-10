@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface UploadedNote {
@@ -45,7 +45,7 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-export default function NotesPage() {
+function NotesContent() {
 
 
   const searchParams = useSearchParams();
@@ -526,5 +526,13 @@ export default function NotesPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function NotesPage() {
+  return (
+    <Suspense fallback={<main className="p-6 text-slate-300">Loading notes...</main>}>
+      <NotesContent />
+    </Suspense>
   );
 }

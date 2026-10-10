@@ -1,20 +1,27 @@
 "use client";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+
+interface ForgotPasswordErrors {
+  email?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+  api?: string;
+}
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<ForgotPasswordErrors>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
-    const newErrors = {};
+    const newErrors: ForgotPasswordErrors = {};
 
     if (!email) newErrors.email = "Email is required";
     if (!newPassword) newErrors.newPassword = "New password is required";
@@ -36,12 +43,11 @@ export default function ForgotPasswordPage() {
 
       alert(response.data.message || "Password updated successfully!");
       router.push("/login");
-    } catch (error) {
-      if (error.response) {
-        setErrors({ api: error.response.data.message });
-      } else {
-        setErrors({ api: "Something went wrong!" });
-      }
+    } catch (error: unknown) {
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      setErrors({ api: message || "Something went wrong!" });
     } finally {
       setLoading(false);
     }
