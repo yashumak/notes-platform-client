@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface UploadedNote {
   _id: string;
@@ -16,20 +16,6 @@ interface UploadedNote {
   year?: number;
   tags?: string[];
   createdAt: string;
-}
-
-interface CoreResult {
-  title?: string;
-  urls?: string[];
-  authors?: string[];
-  description?: string;
-}
-
-interface OpenLibraryResult {
-  key?: string;
-  title?: string;
-  author_name?: string[];
-  first_publish_year?: number;
 }
 
 interface NoteFilters {
@@ -47,16 +33,12 @@ const formatFileSize = (bytes: number) => {
 
 function NotesContent() {
 
-
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("q");
-  console.log("Search Query:", searchQuery);
+  const searchQuery = searchParams.get("q")?.trim() || "";
 
   const [universities, setUniversities] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
-  const [coreResults, setCoreResults] = useState<CoreResult[]>([]);
-  const [openLibraryResults, setOpenLibraryResults] = useState<OpenLibraryResult[]>([]);
-  const [loadingExternal, setLoadingExternal] = useState(false);
 
   const [uniSearch, setUniSearch] = useState("");
   const [courseSearch, setCourseSearch] = useState("");
@@ -106,37 +88,6 @@ function NotesContent() {
     return () => controller.abort();
   }, []);
 
-  // Fetch external API data based on searchQuery
-  useEffect(() => {
-    if (searchQuery) {
-      setLoadingExternal(true);
-      const fetchExternalData = async () => {
-        try {
-          // Core.ac.uk API
-          const coreResponse = await fetch(`https://api.core.ac.uk/v3/search/works?q=${encodeURIComponent(searchQuery)}`);
-          const coreData = await coreResponse.json();
-          console.log("Core.ac.uk Results:", coreData);
-          setCoreResults(coreData.results || []);
-
-          // OpenLibrary API
-          const openLibraryResponse = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}`);
-          const openLibraryData = await openLibraryResponse.json();
-          console.log("OpenLibrary.org Results:", openLibraryData);
-          setOpenLibraryResults(openLibraryData.docs || []);
-
-        } catch (error) {
-          console.error("Error fetching external data:", error);
-        } finally {
-          setLoadingExternal(false);
-        }
-      };
-      fetchExternalData();
-    } else {
-      setCoreResults([]);
-      setOpenLibraryResults([]);
-    }
-  }, [searchQuery]);
-
   // Filter logic
   const filteredUniversities = universities.filter((u) =>
     u.toLowerCase().startsWith(uniSearch.toLowerCase())
@@ -146,12 +97,25 @@ function NotesContent() {
     c.toLowerCase().startsWith(courseSearch.toLowerCase())
   );
 
-  const filteredNotes = uploadedNotes.filter((note) => {
-    const searchText = [note.title, note.description, note.fileName, ...(note.tags || [])]
+  const searchTerms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const getNoteSearchText = (note: UploadedNote) =>
+    [
+      note.title,
+      note.description,
+      note.fileName,
+      note.university,
+      note.course,
+      note.studyType,
+      note.year,
+      ...(note.tags || []),
+    ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-    const queryMatches = !searchQuery || searchText.includes(searchQuery.toLowerCase());
+
+  const filteredNotes = uploadedNotes.filter((note) => {
+    const searchText = getNoteSearchText(note);
+    const queryMatches = searchTerms.every((term) => searchText.includes(term));
     const subjectMatches = !appliedFilters.subject || searchText.includes(appliedFilters.subject.toLowerCase());
 
     return (
@@ -163,6 +127,7 @@ function NotesContent() {
       (!appliedFilters.year || String(note.year || "") === appliedFilters.year)
     );
   });
+  const displayedNotes = filteredNotes.length > 0 ? filteredNotes : uploadedNotes;
 
   const applyFilters = () => {
     setAppliedFilters({
@@ -370,109 +335,43 @@ function NotesContent() {
       <main className="min-w-0 flex-1 p-4 sm:p-6">
         <h1 className="text-3xl font-bold text-white mb-6">Notes & Study Materials</h1>
 
-        {searchQuery && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-slate-100 mb-4">
-              Search Results for &quot;{searchQuery}&quot;
-            </h2>
-            {loadingExternal ? (
-              <p className="text-slate-300">Loading external resources...</p>
-            ) : (
-              <div>
-                {coreResults.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-xl font-medium text-cyan-200 mb-3">
-                      Core.ac.uk Results
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {coreResults.map((result, index) => (
-                        <div
-                          key={index}
-                          className="bg-slate-800/80 border border-slate-700 p-4 rounded-lg shadow-lg"
-                        >
-                          <h4 className="font-bold text-lg">
-                            <a
-                              href={result.urls?.[0]}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-cyan-300 hover:text-cyan-200 hover:underline"
-                            >
-                              {result.title}
-                            </a>
-                          </h4>
-                          <p className="text-sm text-slate-300">
-                            {result.authors?.join(", ")}
-                          </p>
-                          <p className="text-sm text-slate-400 mt-2">
-                            {result.description?.substring(0, 150)}...
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {openLibraryResults.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-xl font-medium text-cyan-200 mb-3">
-                      OpenLibrary.org Results
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {openLibraryResults.map((result, index) => (
-                        <div
-                          key={index}
-                          className="bg-slate-800/80 border border-slate-700 p-4 rounded-lg shadow-lg"
-                        >
-                          <h4 className="font-bold text-lg">
-                            <a
-                              href={`https://openlibrary.org${result.key}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-cyan-300 hover:text-cyan-200 hover:underline"
-                            >
-                              {result.title}
-                            </a>
-                          </h4>
-                          <p className="text-sm text-slate-300">
-                            {result.author_name?.join(", ")}
-                          </p>
-                          <p className="text-sm text-slate-400 mt-2">
-                            First Publish Year: {result.first_publish_year}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {coreResults.length === 0 &&
-                  openLibraryResults.length === 0 && (
-                    <p className="text-slate-300">No external resources found for &quot;{searchQuery}&quot;.</p>
-                  )}
-              </div>
-            )}
-          </div>
-        )}
-
         <section>
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
             <div>
-              {/* <h2 className="text-2xl font-semibold text-slate-100">Uploaded Notes</h2>
-              <p className="mt-1 text-sm text-slate-400">Study materials shared by the community</p> */}
+              {searchQuery && (
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-100">
+                    Uploaded notes matching &quot;{searchQuery}&quot;
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/notes")}
+                    className="mt-2 cursor-pointer text-sm font-medium text-cyan-300 underline-offset-4 hover:text-cyan-200 hover:underline"
+                  >
+                    Clear search and browse all notes
+                  </button>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-slate-400">{filteredNotes.length} {filteredNotes.length === 1 ? "note" : "notes"}</p>
+            <p className="text-sm text-slate-400">{displayedNotes.length} {displayedNotes.length === 1 ? "note" : "notes"}</p>
           </div>
 
           {loadingNotes && <p className="text-slate-300">Loading uploaded notes...</p>}
           {!loadingNotes && notesError && <p className="text-rose-300">{notesError}</p>}
           {!loadingNotes && !notesError && filteredNotes.length === 0 && (
-            <p className="rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
-              {uploadedNotes.length ? "No notes match these filters." : "No notes have been uploaded yet."}
-            </p>
+            <>
+              <p className="rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
+                {uploadedNotes.length
+                  ? searchQuery
+                    ? `No relevant uploaded notes found for "${searchQuery}". Try another keyword or browse all notes.`
+                    : "No notes match these filters."
+                  : "No notes have been uploaded yet."}
+              </p>
+            </>
           )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredNotes.map((note) => (
+            {displayedNotes.map((note) => (
               <article key={note._id} className="flex min-w-0 flex-col rounded-lg border border-slate-700 bg-slate-800/80 p-5 shadow-lg transition-colors hover:border-cyan-500/70">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <span className="truncate rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
