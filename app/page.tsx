@@ -111,7 +111,7 @@ export default function Home() {
               { number: "02", title: "Choose a resource", text: "Compare notes, assignments, papers, and presentations.", accent: "border-blue-400" },
               { number: "03", title: "Share your work", text: "Upload useful materials for students in your community.", accent: "border-fuchsia-400" },
             ].map((step) => (
-              <article key={step.number} className={`min-h-44 rounded-md border border-slate-700 border-t-2 ${step.accent} bg-slate-800/60 p-7 transition-colors hover:bg-slate-800`}>
+              <article key={step.number} className={`fade-up translate-y-4 opacity-0 min-h-44 rounded-lg border border-slate-700 border-t-2 ${step.accent} bg-slate-800/60 p-7 transition-all duration-500 hover:-translate-y-1 hover:border-slate-500 hover:bg-slate-800`}>
                 <p className="text-sm font-bold text-slate-500">{step.number}</p>
                 <h3 className="mt-3 text-lg font-semibold text-white">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-300">{step.text}</p>
@@ -123,7 +123,7 @@ export default function Home() {
         <section className="mt-24 border-t border-slate-700 pt-16 fade-up translate-y-4 opacity-0 transition-all duration-700">
           <p className="mb-2 text-sm font-semibold uppercase text-fuchsia-300">A shared campus library</p>
           <h2 className="text-3xl font-bold text-white">Resources for every part of the semester</h2>
-          <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-7 text-sm sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
               "Class notes",
               "Assignments",
@@ -136,10 +136,23 @@ export default function Home() {
               "Posters",
               "Revision guides",
             ].map((type, index) => (
-              <div key={type} className="flex min-h-16 items-start gap-3 border-t border-slate-700 py-5 text-slate-200">
-                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${index % 3 === 0 ? "bg-cyan-400" : index % 3 === 1 ? "bg-blue-400" : "bg-fuchsia-400"}`} />
-                {type}
-              </div>
+              <article
+                key={type}
+                className={`fade-up translate-y-4 opacity-0 min-h-32 rounded-lg border border-slate-700 border-t-2 ${
+                  index % 3 === 0 ? "border-t-cyan-400" : index % 3 === 1 ? "border-t-blue-400" : "border-t-fuchsia-400"
+                } bg-slate-800/60 p-5 transition-all duration-500 hover:-translate-y-1 hover:border-slate-500 hover:bg-slate-800`}
+              >
+                <span className={`flex h-9 w-9 items-center justify-center rounded-md text-xs font-bold ${
+                  index % 3 === 0
+                    ? "bg-cyan-400/10 text-cyan-300"
+                    : index % 3 === 1
+                      ? "bg-blue-400/10 text-blue-300"
+                      : "bg-fuchsia-400/10 text-fuchsia-300"
+                }`}>
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-4 font-semibold text-slate-100">{type}</h3>
+              </article>
             ))}
           </div>
         </section>
