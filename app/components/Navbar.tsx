@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface NavbarUser {
@@ -10,11 +11,33 @@ interface NavbarUser {
 }
 
 export default function Navbar() {
+  const router = useRouter();
   const [user, setUser] = useState<NavbarUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
+    const sessionExpiresAt = { current: 0 };
+    let expirationTimer: number | undefined;
+
+    const checkSessionExpiry = () => {
+      window.clearTimeout(expirationTimer);
+      const remaining = sessionExpiresAt.current - Date.now();
+      if (remaining > 0) {
+        expirationTimer = window.setTimeout(checkSessionExpiry, remaining);
+        return;
+      }
+      if (!sessionExpiresAt.current) return;
+
+      sessionExpiresAt.current = 0;
+      setUser(null);
+      router.replace("/");
+      fetch("/api/auth/logout", { method: "POST", credentials: "include" })
+        .then((response) => {
+          if (!response.ok) throw new Error("Could not clear expired session cookie");
+        })
+        .catch((error) => console.error("Could not clear expired session:", error));
+    };
 
     const loadUser = async () => {
       try {
@@ -23,10 +46,27 @@ export default function Navbar() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Not authenticated");
-        const data = await response.json();
-        setUser(data.isAuthenticated ? data.user : null);
+        const data: { isAuthenticated: boolean; expiresAt?: number; user?: NavbarUser } = await response.json();
+        if (data.isAuthenticated && data.user) {
+          setUser(data.user);
+          if (typeof data.expiresAt === "number" && Number.isFinite(data.expiresAt)) {
+            sessionExpiresAt.current = data.expiresAt;
+            checkSessionExpiry();
+          } else {
+            sessionExpiresAt.current = 0;
+            window.clearTimeout(expirationTimer);
+          }
+        } else {
+          sessionExpiresAt.current = 0;
+          window.clearTimeout(expirationTimer);
+          setUser(null);
+        }
       } catch {
-        if (!controller.signal.aborted) setUser(null);
+        if (!controller.signal.aborted) {
+          sessionExpiresAt.current = 0;
+          window.clearTimeout(expirationTimer);
+          setUser(null);
+        }
       } finally {
         if (!controller.signal.aborted) setAuthChecked(true);
       }
@@ -36,13 +76,16 @@ export default function Navbar() {
     loadUser();
     window.addEventListener("profile-photo-updated", refreshUser);
     window.addEventListener("auth-state-updated", refreshUser);
+    document.addEventListener("visibilitychange", checkSessionExpiry);
 
     return () => {
       controller.abort();
+      window.clearTimeout(expirationTimer);
       window.removeEventListener("profile-photo-updated", refreshUser);
       window.removeEventListener("auth-state-updated", refreshUser);
+      document.removeEventListener("visibilitychange", checkSessionExpiry);
     };
-  }, []);
+  }, [router]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md">
