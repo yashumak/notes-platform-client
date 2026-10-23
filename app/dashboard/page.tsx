@@ -43,6 +43,8 @@ export default function DashboardPage() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -81,7 +83,7 @@ export default function DashboardPage() {
         if (!controller.signal.aborted) {
           setError(loadError instanceof Error ? loadError.message : "Could not load your dashboard.");
         }
-      } finally {
+      }  finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     };
@@ -137,6 +139,41 @@ export default function DashboardPage() {
       setLogoutError(logoutFailure instanceof Error ? logoutFailure.message : "Could not log out. Please try again.");
     } finally {
       setLoggingOut(false);
+    }
+  };
+
+  const handleDeleteNote = async (note: UploadedNote) => {
+    if (!window.confirm(`Delete "${note.title}"? This cannot be undone.`)) return;
+
+    setDeletingNoteId(note._id);
+    setDeleteError("");
+
+    try {
+      const response = await fetch(`/api/notes/${note._id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const data: { message?: string } | null = contentType.includes("application/json")
+        ? await response.json()
+        : null;
+
+      if (response.status === 401) {
+        router.replace("/");
+        return;
+      }
+      if (!response.ok) {
+        if (response.status === 404 && !data) {
+          throw new Error("The connected backend does not support note deletion yet. Deploy the latest backend and check the Vercel backend URL.");
+        }
+        throw new Error(data?.message || "Could not delete note. Please try again.");
+      }
+
+      setUploadedNotes((currentNotes) => currentNotes.filter((item) => item._id !== note._id));
+    } catch (deleteFailure) {
+      setDeleteError(deleteFailure instanceof Error ? deleteFailure.message : "Could not delete note. Please try again.");
+    } finally {
+      setDeletingNoteId(null);
     }
   };
 
@@ -236,6 +273,8 @@ export default function DashboardPage() {
             </Link>
           </div>
 
+          {deleteError && <p className="mb-4 text-sm text-rose-300" role="alert">{deleteError}</p>}
+
           {uploadedNotes.length === 0 ? (
             <p className="border-t border-slate-700 py-6 text-slate-400">You haven’t uploaded any materials yet.</p>
           ) : (
@@ -257,9 +296,19 @@ export default function DashboardPage() {
                     <time className="text-xs text-slate-500" dateTime={note.createdAt}>
                       {new Date(note.createdAt).toLocaleDateString()}
                     </time>
-                    <a href={note.fileUrl} download={note.fileName} className="text-sm font-semibold text-cyan-300 hover:text-cyan-100 hover:underline">
-                      Download
-                    </a>
+                    <div className="flex items-center gap-4">
+                      <a href={note.fileUrl} download={note.fileName} className="text-sm font-semibold text-cyan-300 hover:text-cyan-100 hover:underline">
+                        Download
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteNote(note)}
+                        disabled={deletingNoteId !== null}
+                        className="cursor-pointer text-sm font-semibold text-rose-300 hover:text-rose-200 hover:underline disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {deletingNoteId === note._id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
