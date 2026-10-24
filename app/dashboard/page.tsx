@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 interface AccountProfile {
   name: string;
@@ -39,8 +38,17 @@ export default function DashboardPage() {
   const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [photoError, setPhotoError] = useState("");
-  const [photoUploading, setPhotoUploading] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    university: "",
+    course: "",
+    year: "",
+  });
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [profileSaveError, setProfileSaveError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
@@ -92,33 +100,47 @@ export default function DashboardPage() {
     return () => controller.abort();
   }, [router]);
 
-  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const photo = event.target.files?.[0];
-    if (!photo) return;
+  const openProfileEditor = () => {
+    setProfileForm({
+      name: profile?.name ?? "",
+      email: profile?.email ?? "",
+      university: profile?.university ?? "",
+      course: profile?.course ?? "",
+      year: profile?.year ?? "",
+    });
+    setProfilePhoto(null);
+    setProfileSaveError("");
+    setEditingProfile(true);
+  };
 
-    setPhotoError("");
-    setPhotoUploading(true);
+  const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setProfileSaveError("");
+    setSavingProfile(true);
+
     const formData = new FormData();
-    formData.append("photo", photo);
+    Object.entries(profileForm).forEach(([key, value]) => formData.append(key, value));
+    if (profilePhoto) formData.append("photo", profilePhoto);
 
     try {
-      const response = await fetch("/api/auth/profile/photo", {
+      const response = await fetch("/api/auth/profile", {
         method: "PUT",
         body: formData,
         credentials: "include",
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Could not update profile photo");
+      const data: { message?: string; errors?: { msg?: string }[]; user?: AccountProfile } = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || data.errors?.[0]?.msg || "Could not update your profile");
+      }
+      if (!data.user) throw new Error("The server did not return your updated profile");
 
-      setProfile((currentProfile) => currentProfile
-        ? { ...currentProfile, profilePhotoUrl: `${data.profilePhotoUrl}?v=${Date.now()}` }
-        : currentProfile);
+      setProfile(data.user);
+      setEditingProfile(false);
       window.dispatchEvent(new Event("profile-photo-updated"));
     } catch (uploadError) {
-      setPhotoError(uploadError instanceof Error ? uploadError.message : "Could not update profile photo");
+      setProfileSaveError(uploadError instanceof Error ? uploadError.message : "Could not update your profile");
     } finally {
-      setPhotoUploading(false);
-      event.target.value = "";
+      setSavingProfile(false);
     }
   };
 
@@ -215,23 +237,13 @@ export default function DashboardPage() {
             <p className="mt-1 break-all text-slate-400">{profile.email}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
-            <div>
-              <label
-                htmlFor="profile-photo"
-                className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${photoUploading ? "pointer-events-none border-slate-700 text-slate-500" : "border-cyan-400/50 text-cyan-200 hover:bg-cyan-400/10"}`}
-              >
-                {photoUploading ? "Uploading photo..." : profile.profilePhotoUrl ? "Change photo" : "Add profile photo"}
-              </label>
-              <input
-                id="profile-photo"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                disabled={photoUploading}
-                onChange={handlePhotoChange}
-              />
-              {photoError && <p className="mt-2 max-w-56 text-sm text-rose-300" role="alert">{photoError}</p>}
-            </div>
+            <button
+              type="button"
+              onClick={openProfileEditor}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-400/50 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+            >
+              Edit profile
+            </button>
             <button
               type="button"
               onClick={handleLogout}
@@ -243,6 +255,116 @@ export default function DashboardPage() {
             {logoutError && <p className="basis-full text-sm text-rose-300" role="alert">{logoutError}</p>}
           </div>
         </header>
+
+        {editingProfile && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4" role="presentation">
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-profile-title"
+              className="my-auto w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl sm:p-8"
+            >
+              <h2 id="edit-profile-title" className="text-2xl font-bold text-white">Edit profile</h2>
+              <p className="mt-2 text-sm text-slate-400">Update your account and study details.</p>
+              <form onSubmit={handleProfileSave} className="mt-6 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="profile-name" className="text-sm font-medium text-slate-200">Full name</label>
+                  <input
+                    id="profile-name"
+                    name="name"
+                    type="text"
+                    required
+                    maxLength={100}
+                    value={profileForm.name}
+                    onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })}
+                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="profile-email" className="text-sm font-medium text-slate-200">Email</label>
+                  <input
+                    id="profile-email"
+                    name="email"
+                    type="email"
+                    required
+                    value={profileForm.email}
+                    onChange={(event) => setProfileForm({ ...profileForm, email: event.target.value })}
+                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="profile-university" className="text-sm font-medium text-slate-200">College / University</label>
+                  <input
+                    id="profile-university"
+                    name="university"
+                    type="text"
+                    required
+                    maxLength={200}
+                    value={profileForm.university}
+                    onChange={(event) => setProfileForm({ ...profileForm, university: event.target.value })}
+                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="profile-course" className="text-sm font-medium text-slate-200">Branch / course</label>
+                  <input
+                    id="profile-course"
+                    name="course"
+                    type="text"
+                    required
+                    maxLength={100}
+                    value={profileForm.course}
+                    onChange={(event) => setProfileForm({ ...profileForm, course: event.target.value })}
+                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="profile-year" className="text-sm font-medium text-slate-200">Year</label>
+                  <input
+                    id="profile-year"
+                    name="year"
+                    type="text"
+                    required
+                    maxLength={50}
+                    value={profileForm.year}
+                    onChange={(event) => setProfileForm({ ...profileForm, year: event.target.value })}
+                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="profile-photo" className="text-sm font-medium text-slate-200">Profile photo</label>
+                  <input
+                    id="profile-photo"
+                    name="photo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => setProfilePhoto(event.target.files?.[0] ?? null)}
+                    className="mt-2 block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-cyan-400/10 file:px-4 file:py-2 file:font-semibold file:text-cyan-200 hover:file:bg-cyan-400/20"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">JPEG, PNG, or WebP; maximum 5 MB.</p>
+                </div>
+                {profileSaveError && <p className="sm:col-span-2 text-sm text-rose-300" role="alert">{profileSaveError}</p>}
+                <div className="flex justify-end gap-3 sm:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile(false)}
+                    disabled={savingProfile}
+                    className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-500 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {savingProfile ? "Saving..." : "Save changes"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
 
         <section className="border-b border-slate-700 py-8">
           <h2 className="text-xl font-semibold text-white">Study profile</h2>
@@ -268,9 +390,6 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-semibold text-white">My uploaded notes</h2>
               <p className="mt-1 text-sm text-slate-400">{uploadedNotes.length} {uploadedNotes.length === 1 ? "upload" : "uploads"}</p>
             </div>
-            <Link href="/upload" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300">
-              Upload material
-            </Link>
           </div>
 
           {deleteError && <p className="mb-4 text-sm text-rose-300" role="alert">{deleteError}</p>}
