@@ -14,6 +14,15 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<NavbarUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [searchApplied, setSearchApplied] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const query = window.location.pathname === "/notes" ? params.get("q")?.trim() || "" : "";
+    setSearchText(query);
+    setSearchApplied(Boolean(query));
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -99,17 +108,43 @@ export default function Navbar() {
       <div className="flex-1 flex justify-center px-6">
         <form action="/notes" method="get" role="search" className="relative w-full max-w-lg">
           <input
-            type="search"
+            type="text"
             name="q"
             aria-label="Search uploaded notes"
             placeholder="Search Notes, Assignments, Papers, Que Banks, PPT, Reports..."
-            className="w-full px-5 py-2.5 border border-blue-200 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+            value={searchText}
+            onChange={(event) => {
+              setSearchText(event.target.value);
+              setSearchApplied(false);
+            }}
+            className="w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-          <button type="submit" aria-label="Search notes" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
+          {searchApplied ? (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                setSearchText("");
+                setSearchApplied(false);
+                router.push("/notes");
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label="Search notes"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          )}
         </form>
       </div>
 
