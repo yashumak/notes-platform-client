@@ -11,6 +11,8 @@ interface UploadedNote {
   fileSize?: number;
   fileUrl?: string;
   university?: string;
+  subject?: string;
+  branch?: string;
   course?: string;
   studyType?: string;
   year?: number;
@@ -30,6 +32,8 @@ const formatFileSize = (bytes: number) => {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
+
+const isAllSelection = (value: string) => value.trim().toLowerCase() === "all";
 
 function NotesContent() {
 
@@ -98,12 +102,15 @@ function NotesContent() {
   );
 
   const searchTerms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const subjectTerms = appliedFilters.subject.toLowerCase().split(/\s+/).filter(Boolean);
   const getNoteSearchText = (note: UploadedNote) =>
     [
       note.title,
       note.description,
       note.fileName,
       note.university,
+      note.subject,
+      note.branch,
       note.course,
       note.studyType,
       note.year,
@@ -116,13 +123,15 @@ function NotesContent() {
   const filteredNotes = uploadedNotes.filter((note) => {
     const searchText = getNoteSearchText(note);
     const queryMatches = searchTerms.every((term) => searchText.includes(term));
-    const subjectMatches = !appliedFilters.subject || searchText.includes(appliedFilters.subject.toLowerCase());
+    const subjectMatches = subjectTerms.every((term) => searchText.includes(term));
+    const universityFilter = isAllSelection(appliedFilters.university) ? "" : appliedFilters.university;
+    const courseFilter = isAllSelection(appliedFilters.course) ? "" : appliedFilters.course;
 
     return (
       queryMatches &&
       subjectMatches &&
-      (!appliedFilters.university || note.university?.toLowerCase().includes(appliedFilters.university.toLowerCase())) &&
-      (!appliedFilters.course || note.course?.toLowerCase().includes(appliedFilters.course.toLowerCase())) &&
+      (!universityFilter || note.university?.toLowerCase().includes(universityFilter.toLowerCase())) &&
+      (!courseFilter || (note.branch || note.course)?.toLowerCase().includes(courseFilter.toLowerCase())) &&
       (!appliedFilters.studyType || note.studyType === appliedFilters.studyType) &&
       (!appliedFilters.year || String(note.year || "") === appliedFilters.year)
     );
@@ -359,15 +368,13 @@ function NotesContent() {
           {loadingNotes && <p className="text-slate-300">Loading uploaded notes...</p>}
           {!loadingNotes && notesError && <p className="text-rose-300">{notesError}</p>}
           {!loadingNotes && !notesError && filteredNotes.length === 0 && (
-            <>
-              <p className="rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
-                {uploadedNotes.length
-                  ? searchQuery
-                    ? `No relevant uploaded notes found for "${searchQuery}". Try another keyword or browse all notes.`
-                    : "No notes match these filters."
-                  : "No notes have been uploaded yet."}
-              </p>
-            </>
+            <p className="mb-4 rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
+              {uploadedNotes.length
+                ? searchQuery
+                  ? `No relevant uploaded notes found for "${searchQuery}". Try another keyword or browse all notes.`
+                  : "No notes match these filters. Showing all uploaded notes below."
+                : "No notes have been uploaded yet."}
+            </p>
           )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

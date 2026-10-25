@@ -3,8 +3,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getRedirectDestination } from "../authRedirect";
+import { showToast } from "../components/ToastNotifications";
+import PasswordInput from "../components/PasswordInput";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [name, setname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -69,13 +74,15 @@ export default function SignupPage() {
         { withCredentials: true }
       );
 
-      window.location.href = "/dashboard";
+      showToast("Registration successful!");
+      window.dispatchEvent(new Event("auth-state-updated"));
+      router.replace(getRedirectDestination("/dashboard"));
     } catch (error: unknown) {
       console.error(error);
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
         : undefined;
-      alert(message || "Registration failed");
+      showToast(message || "Registration failed", "error");
     }
   };
 
@@ -118,8 +125,7 @@ export default function SignupPage() {
           {/* Password */}
           <div>
             <label className="font-medium text-slate-200">Password</label>
-            <input
-              type="password"
+            <PasswordInput
               className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -246,7 +252,17 @@ export default function SignupPage() {
 
             <p className="mt-5 text-center text-sm text-slate-400">
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-cyan-300 transition-colors hover:text-cyan-200 hover:underline">
+              <Link
+                href="/login"
+                onClick={(event) => {
+                  const destination = getRedirectDestination("/dashboard");
+                  if (destination !== "/dashboard") {
+                    event.preventDefault();
+                    router.push(`/login?redirect=${encodeURIComponent(destination)}`);
+                  }
+                }}
+                className="font-medium text-cyan-300 transition-colors hover:text-cyan-200 hover:underline"
+              >
                 Login
               </Link>
             </p>

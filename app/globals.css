@@ -3,3 +3,22 @@
 @tailwind utilities;
 
 @import "tailwindcss";
+
+@keyframes toast-lifecycle {
+  0% {
+    opacity: 0;
+    transform: translate3d(1rem, -0.5rem, 0) scale(0.96);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(1rem, -0.25rem, 0) scale(0.98);
+  }
+}

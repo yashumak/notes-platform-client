@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PasswordInput from "../components/PasswordInput";
 
 interface ForgotPasswordErrors {
   email?: string;
@@ -99,9 +100,8 @@ export default function ForgotPasswordPage() {
             <label htmlFor="new-password" className="mb-2 block text-sm font-medium text-slate-200">
               New Password
             </label>
-            <input
+            <PasswordInput
               id="new-password"
-              type="password"
               autoComplete="new-password"
               placeholder="Enter a new password"
               value={newPassword}
@@ -117,9 +117,8 @@ export default function ForgotPasswordPage() {
             <label htmlFor="confirm-password" className="mb-2 block text-sm font-medium text-slate-200">
               Confirm New Password
             </label>
-            <input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               autoComplete="new-password"
               placeholder="Re-enter your new password"
               value={confirmPassword}
