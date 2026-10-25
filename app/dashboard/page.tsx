@@ -217,16 +217,28 @@ export default function DashboardPage() {
     <main className="min-h-screen px-4 pb-20 pt-28 text-slate-100 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <header className="flex flex-wrap items-center gap-5 border-b border-slate-700 pb-8">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-cyan-300/40 bg-cyan-400/10 text-2xl font-bold text-cyan-200">
+          <div className="group relative flex h-20 w-20 shrink-0 items-center justify-center overflow-visible rounded-full border border-cyan-300/40 bg-cyan-400/10 text-2xl font-bold text-cyan-200">
             {profile.profilePhotoUrl ? (
-              <Image
-                src={profile.profilePhotoUrl}
-                alt={`${profile.name}'s profile`}
-                width={80}
-                height={80}
-                unoptimized
-                className="h-full w-full object-cover"
-              />
+              <>
+                <Image
+                  src={profile.profilePhotoUrl}
+                  alt={`${profile.name}'s profile`}
+                  width={80}
+                  height={80}
+                  unoptimized
+                  className="h-full w-full rounded-full object-cover"
+                />
+                <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 w-48 -translate-x-1/2 translate-y-2 overflow-hidden rounded-xl border border-slate-600 bg-slate-900 p-1 opacity-0 shadow-2xl transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                  <Image
+                    src={profile.profilePhotoUrl}
+                    alt={`${profile.name}'s profile photo preview`}
+                    width={192}
+                    height={192}
+                    unoptimized
+                    className="h-48 w-48 rounded-lg object-cover"
+                  />
+                </span>
+              </>
             ) : (
               profile.name.trim().charAt(0).toUpperCase()
             )}
