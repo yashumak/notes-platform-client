@@ -1,6 +1,10 @@
 "use client";
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
+import { getRedirectDestination } from "../authRedirect";
+import { showToast } from "../components/ToastNotifications";
+import PasswordInput from "../components/PasswordInput";
 
 interface LoginErrors {
   email?: string;
@@ -9,6 +13,7 @@ interface LoginErrors {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -35,16 +40,9 @@ export default function LoginPage() {
         { withCredentials: true }
       );
 
-      alert(response.data.message || "Login successful!");
-
-      const requestedDestination = new URLSearchParams(window.location.search).get("redirect");
-      const destinationUrl = requestedDestination
-        ? new URL(requestedDestination, window.location.origin)
-        : null;
-      const destination = destinationUrl?.origin === window.location.origin
-        ? `${destinationUrl.pathname}${destinationUrl.search}${destinationUrl.hash}`
-        : "/";
-      window.location.href = destination;
+      showToast(response.data.message || "Login successful!");
+      window.dispatchEvent(new Event("auth-state-updated"));
+      router.replace(getRedirectDestination("/"));
     } catch (error: unknown) {
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
@@ -88,8 +86,7 @@ export default function LoginPage() {
           {/* Password */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -132,7 +129,17 @@ export default function LoginPage() {
 
         <p className="mt-7 text-center text-sm text-slate-400">
           Don’t have an account?{" "}
-          <a href="/signup" className="font-medium text-cyan-300 transition-colors hover:text-cyan-200 hover:underline">
+          <a
+            href="/signup"
+            onClick={(event) => {
+              const destination = getRedirectDestination("/");
+              if (destination !== "/") {
+                event.preventDefault();
+                router.push(`/signup?redirect=${encodeURIComponent(destination)}`);
+              }
+            }}
+            className="font-medium text-cyan-300 transition-colors hover:text-cyan-200 hover:underline"
+          >
             Create Account
           </a>
         </p>
