@@ -9,6 +9,67 @@ interface UploadResponse {
   url?: string;
 }
 
+interface PendingUpload {
+  file: File;
+  title: string;
+  description: string;
+  university: string;
+  branch: string;
+  studyType: string;
+  year: string;
+}
+
+const pendingUploadDatabase = "noteshub-pending-upload";
+const pendingUploadStore = "uploads";
+
+function openPendingUploadDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(pendingUploadDatabase, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(pendingUploadStore);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("Could not open saved upload"));
+  });
+}
+
+async function savePendingUpload(upload: PendingUpload): Promise<void> {
+  const database = await openPendingUploadDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(pendingUploadStore, "readwrite");
+    transaction.objectStore(pendingUploadStore).put(upload, "pending");
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error || new Error("Could not save upload details"));
+    transaction.onabort = () => reject(transaction.error || new Error("Could not save upload details"));
+  }).finally(() => database.close());
+}
+
+async function getPendingUpload(): Promise<PendingUpload | undefined> {
+  const database = await openPendingUploadDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(pendingUploadStore, "readonly");
+    const request = transaction.objectStore(pendingUploadStore).get("pending");
+    request.onsuccess = () => resolve(request.result as PendingUpload | undefined);
+    request.onerror = () => reject(request.error || new Error("Could not restore saved upload"));
+    transaction.oncomplete = () => database.close();
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error || new Error("Could not restore saved upload"));
+    };
+  });
+}
+
+async function clearPendingUpload(): Promise<void> {
+  const database = await openPendingUploadDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(pendingUploadStore, "readwrite");
+    transaction.objectStore(pendingUploadStore).delete("pending");
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error || new Error("Could not clear saved upload"));
+    transaction.onabort = () => reject(transaction.error || new Error("Could not clear saved upload"));
+  }).finally(() => database.close());
+}
+
 const UploadNote: React.FC = () => {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -26,6 +87,7 @@ const UploadNote: React.FC = () => {
   const [showBranchList, setShowBranchList] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const studyTypes: string[] = [
     "Notes",
@@ -51,10 +113,28 @@ const UploadNote: React.FC = () => {
       }
     };
     fetchData();
+
+    getPendingUpload()
+      .then((pendingUpload) => {
+        if (!pendingUpload) return;
+        setFile(pendingUpload.file);
+        setTitle(pendingUpload.title);
+        setDescription(pendingUpload.description);
+        setUniversity(pendingUpload.university);
+        setUniSearch(pendingUpload.university);
+        setBranch(pendingUpload.branch);
+        setBranchSearch(pendingUpload.branch);
+        setStudyType(pendingUpload.studyType);
+        setYear(pendingUpload.year);
+      })
+      .catch((error: unknown) => {
+        console.error("Could not restore saved upload:", error);
+        setUploadError("Could not restore your saved upload. Please select the file and enter its details again.");
+      });
   }, []);
 
   const years: string[] = [
-    "2025", "2024", "2023", "2022", "2021", "2020",
+    "2026", "2025", "2024", "2023", "2022", "2021", "2020",
     "2019", "2018", "2017", "2016", "2015", "2014",
     "2013", "2012", "2011", "2010", "2009", "2008",
     "2007", "2006", "2005", "2004", "2003", "2002",
@@ -63,10 +143,11 @@ const UploadNote: React.FC = () => {
 
   const handleUpload = async () => {
     if (!file) {
-      alert("Please select a file!");
+      setUploadError("Please select a file.");
       return;
     }
 
+    setUploadError("");
     setLoading(true);
 
     const formData = new FormData();
@@ -86,22 +167,27 @@ const UploadNote: React.FC = () => {
         credentials: "include",
       });
 
-      const data: UploadResponse = await response.json();
-      console.log(data);
-
       if (response.status === 401) {
-        router.replace("/login?redirect=%2Fupload");
+        try {
+          await savePendingUpload({ file, title, description, university, branch, studyType, year });
+          router.replace("/login?redirect=%2Fupload");
+        } catch (error: unknown) {
+          console.error("Could not save upload before login:", error);
+          setUploadError("Your browser could not save this file for login. Please try again or sign in in another tab before uploading.");
+        }
         return;
       }
 
+      const data: UploadResponse = await response.json();
       if (data.success) {
+        await clearPendingUpload();
         router.push("/notes");
       } else {
-        alert(data.message || "Upload failed!");
+        setUploadError(data.message || "Upload failed. Please try again.");
       }
     } catch (error) {
       console.error(error);
-      alert("Something went wrong while uploading.");
+      setUploadError("Something went wrong while uploading. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -270,6 +356,12 @@ const UploadNote: React.FC = () => {
 
         </div>
         {/* GRID END */}
+
+        {uploadError && (
+          <p role="alert" className="mt-5 rounded-lg border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+            {uploadError}
+          </p>
+        )}
 
         {/* Button */}
         <button
