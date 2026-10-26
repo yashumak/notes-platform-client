@@ -2,14 +2,21 @@
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/+$/, "") || "http://localhost:5000";
 
 const nextConfig = {
+  compiler: {
+    removeConsole: {
+      exclude: ["error", "warn"],
+    },
+  },
   async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${backendUrl}/api/:path*`,
-      },
-    ];
+    return {
+      afterFiles: [
+        {
+          source: "/api/:path*",
+          destination: `${backendUrl}/api/:path*`,
+        },
+      ],
+    };
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

@@ -402,6 +402,12 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-semibold text-white">My uploaded notes</h2>
               <p className="mt-1 text-sm text-slate-400">{uploadedNotes.length} {uploadedNotes.length === 1 ? "upload" : "uploads"}</p>
             </div>
+            <a
+              href="/upload"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-cyan-400/50 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+            >
+              Upload notes
+            </a>
           </div>
 
           {deleteError && <p className="mb-4 text-sm text-rose-300" role="alert">{deleteError}</p>}

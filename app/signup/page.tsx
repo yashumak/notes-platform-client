@@ -33,8 +33,9 @@ export default function SignupPage() {
         const data = await response.json();
         setUniversities(data.colleges);
         setBranches(data.branches);
-      } catch (error) {
-        console.error("Error fetching engineering data:", error);
+      } catch {
+        setUniversities([]);
+        setBranches([]);
       }
     };
     fetchData();
@@ -78,7 +79,6 @@ export default function SignupPage() {
       window.dispatchEvent(new Event("auth-state-updated"));
       router.replace(getRedirectDestination("/dashboard"));
     } catch (error: unknown) {
-      console.error(error);
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
         : undefined;
@@ -133,8 +133,8 @@ export default function SignupPage() {
             {errors.password && (
               <p className="mt-2 text-sm text-rose-300">{errors.password}</p>
             )}
-            {password.length > 0 && password.length < 7 && (
-              <p className="mt-2 text-sm text-rose-300">Password must be at least 7 characters.</p>
+            {password.length > 0 && password.length < 8 && (
+              <p className="mt-2 text-sm text-rose-300">Password must be at least 8 characters.</p>
             )}
           </div>
 

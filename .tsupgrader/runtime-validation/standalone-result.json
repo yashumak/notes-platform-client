@@ -1,0 +1,301 @@
+{
+  "planHash": "275196c315a7acc1d1d36a1eae1a6558edf387a5451ae21421e4829a4f895170",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-10-26T17:45:27.8034309Z",
+  "retryCount": 3,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 0,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "frontend-lint",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E frontend@0.1.0 lint\r\n\u003E eslint\r\n\r\n\r\nC:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend\\postcss.config.mjs\r\n  1:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export\r\n\r\nC:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend\\tailwind.config.mjs\r\n  1:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export\r\n\r\n\u2716 2 problems (0 errors, 2 warnings)\r\n\r\n",
+        "durationMs": 5714
+      },
+      {
+        "name": "frontend-type-check",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 2758
+      },
+      {
+        "name": "frontend-production-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E frontend@0.1.0 build\r\n\u003E next build\r\n\r\n\u25B2 Next.js 16.4.3 (Turbopack)\r\n- Environments: .env\r\n\u2713 Running next.config.js took 18ms\r\n\r\n  Creating an optimized production build ...\r\n\u2713 Compiled successfully in 1676ms\r\n  Running TypeScript ...\r\n  Finished TypeScript in 1374ms ...\r\n  Collecting page data using 11 workers ...\r\n  Generating static pages using 11 workers (0/17) ...\r\n  Generating static pages using 11 workers (4/17) \r\n  Generating static pages using 11 workers (8/17) \r\n  Generating static pages using 11 workers (12/17) \r\n\u2713 Generating static pages using 11 workers (17/17) in 440ms\r\n  Finalizing page optimization ...\r\n\r\nRoute (app)\r\n\u250C \u25CB /\r\n\u251C \u25CB /_not-found\r\n\u251C \u0192 /api/notes/stats\r\n\u251C \u25CB /dashboard\r\n\u251C \u25CB /footer/about\r\n\u251C \u25CB /footer/contact\r\n\u251C \u25CB /footer/cookies\r\n\u251C \u25CB /footer/help-faq\r\n\u251C \u25CB /footer/privacy\r\n\u251C \u25CB /footer/terms\r\n\u251C \u25CB /forgot-password\r\n\u251C \u25CB /icon.svg\r\n\u251C \u25CB /login\r\n\u251C \u25CB /notes\r\n\u251C \u0192 /notes/[id]\r\n\u251C \u25CB /signup\r\n\u2514 \u25CB /upload\r\n\r\n\r\n\u25CB  (Static)   prerendered as static content\r\n\u0192  (Dynamic)  server-rendered on demand\r\n\r\n",
+        "durationMs": 6658
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E frontend@0.1.0 test\r\n\u003E jest --runInBand\r\n\r\nTest Suites: 1 passed, 1 total\r\nTests:       1 passed, 1 total\r\nSnapshots:   0 total\r\nTime:        1.744 s, estimated 2 s\r\nRan all test suites.\r\n",
+        "durationMs": 2776,
+        "testResults": {
+          "testFramework": "jest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 1,
+          "testsPassed": 1,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "homepage-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/app_globals_0yg4wg8plh8sv.css\u0022 data-precedence=\u0022next_static/chunks/app_globals_0yg4wg8plh8sv.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_06rkbud3pyrlm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_219uq1sj0q91c._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_17zmryeo0xejc._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_components_1mgg_ns71vv6e._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_page_tsx_1s_43kldtlqfi._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/favicon.svg\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody class=\u0022flex flex-col min-h-screen\u0022\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cnav class=\u0022fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md\u0022\u003E\u003Ca class=\u0022text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors\u0022 href=\u0022/\u0022\u003ENotesHub\u003C/a\u003E\u003Cdiv class=\u0022flex-1 flex justify-center px-6\u0022\u003E\u003Cform role=\u0022search\u0022 class=\u0022relative w-full max-w-lg\u0022 action=\u0022/notes\u0022 method=\u0022get\u0022\u003E\u003Cinput type=\u0022text\u0022 aria-label=\u0022Search uploaded notes\u0022 placeholder=\u0022Search Notes, Assignments, Papers, Que Banks, PPT, Reports...\u0022 class=\u0022w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400\u0022 name=\u0022q\u0022 value=\u0022\u0022/\u003E\u003Cbutton type=\u0022submit\u0022 aria-label=\u0022Search notes\u0022 class=\u0022absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700\u0022\u003E\u003Csvg class=\u0022h-5 w-5\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 viewBox=\u00220 0 24 24\u0022 aria-hidden=\u0022true\u0022\u003E\u003Cpath stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 stroke-width=\u00222\u0022 d=\u0022M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/button\u003E\u003C/form\u003E\u003C/div\u003E\u003Cdiv class=\u0022flex items-center font-semibold gap-6 text-gray-700\u0022\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/\u0022\u003EHome\u003C/a\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/notes\u0022\u003ENotes\u003C/a\u003E\u003C/div\u003E\u003C/nav\u003E\u003Cmain class=\u0022flex-grow w-full bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900\u0022\u003E\u003Cdiv class=\u0022text-white\u0022\u003E\u003Csection class=\u0022relative isolate flex min-h-[560px] items-center overflow-hidden px-6 py-20 md:min-h-[640px] md:py-24\u0022\u003E\u003Cdiv aria-hidden=\u0022true\u0022 class=\u0022absolute inset-0 -z-20 bg-cover bg-center\u0022 style=\u0022background-image:url(\u0026#x27;https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format\u0026amp;fit=crop\u0026amp;w=2000\u0026amp;q=85\u0026#x27;)\u0022\u003E\u003C/div\u003E\u003Cdiv class=\u0022absolute inset-0 -z-10 bg-slate-950/75\u0022\u003E\u003C/div\u003E\u003Cdiv class=\u0022mx-auto w-full max\n\u2026[truncated]",
+        "durationMs": 62
+      },
+      {
+        "name": "login-page-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/app_globals_0yg4wg8plh8sv.css\u0022 data-precedence=\u0022next_static/chunks/app_globals_0yg4wg8plh8sv.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_06rkbud3pyrlm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1urspxgmkk327._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_17zmryeo0xejc._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_components_1mgg_ns71vv6e._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_axios_lib_1yl9f_oq5xg9q._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_0m53v-zguhrvz._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/favicon.svg\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody class=\u0022flex flex-col min-h-screen\u0022\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cnav class=\u0022fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md\u0022\u003E\u003Ca class=\u0022text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors\u0022 href=\u0022/\u0022\u003ENotesHub\u003C/a\u003E\u003Cdiv class=\u0022flex-1 flex justify-center px-6\u0022\u003E\u003Cform role=\u0022search\u0022 class=\u0022relative w-full max-w-lg\u0022 action=\u0022/notes\u0022 method=\u0022get\u0022\u003E\u003Cinput type=\u0022text\u0022 aria-label=\u0022Search uploaded notes\u0022 placeholder=\u0022Search Notes, Assignments, Papers, Que Banks, PPT, Reports...\u0022 class=\u0022w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400\u0022 name=\u0022q\u0022 value=\u0022\u0022/\u003E\u003Cbutton type=\u0022submit\u0022 aria-label=\u0022Search notes\u0022 class=\u0022absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700\u0022\u003E\u003Csvg class=\u0022h-5 w-5\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 viewBox=\u00220 0 24 24\u0022 aria-hidden=\u0022true\u0022\u003E\u003Cpath stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 stroke-width=\u00222\u0022 d=\u0022M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/button\u003E\u003C/form\u003E\u003C/div\u003E\u003Cdiv class=\u0022flex items-center font-semibold gap-6 text-gray-700\u0022\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/\u0022\u003EHome\u003C/a\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/notes\u0022\u003ENotes\u003C/a\u003E\u003C/div\u003E\u003C/nav\u003E\u003Cmain class=\u0022flex-grow w-full bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900\u0022\u003E\u003Cdiv class=\u0022flex min-h-screen items-center justify-center px-4 py-16\u0022\u003E\u003Cdiv class=\u0022w-full max-w-md rounded-xl border border-slate-700 border-t-2 border-t-cyan-400 bg-slate-900/90 p-7 shadow-2xl shadow-slate-950/40 sm:p-9\u0022\u003E\u003Cp class=\u0022mb-3 text-center text-sm font-semibold uppercase text-cyan-300\u0022\u003EWelcome back\u003C/p\u003E\u003Ch2 class=\u0022mb-2 text-center text-3xl font-bold text-white\u0022\u003ELog\n\u2026[truncated]",
+        "durationMs": 63
+      },
+      {
+        "name": "signup-page-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/app_globals_0yg4wg8plh8sv.css\u0022 data-precedence=\u0022next_static/chunks/app_globals_0yg4wg8plh8sv.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_06rkbud3pyrlm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_0ekjam_2ghssw._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_17zmryeo0xejc._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_components_1mgg_ns71vv6e._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_axios_lib_1yl9f_oq5xg9q._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_1i4ljbyhxgops._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/favicon.svg\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody class=\u0022flex flex-col min-h-screen\u0022\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cnav class=\u0022fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md\u0022\u003E\u003Ca class=\u0022text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors\u0022 href=\u0022/\u0022\u003ENotesHub\u003C/a\u003E\u003Cdiv class=\u0022flex-1 flex justify-center px-6\u0022\u003E\u003Cform role=\u0022search\u0022 class=\u0022relative w-full max-w-lg\u0022 action=\u0022/notes\u0022 method=\u0022get\u0022\u003E\u003Cinput type=\u0022text\u0022 aria-label=\u0022Search uploaded notes\u0022 placeholder=\u0022Search Notes, Assignments, Papers, Que Banks, PPT, Reports...\u0022 class=\u0022w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400\u0022 name=\u0022q\u0022 value=\u0022\u0022/\u003E\u003Cbutton type=\u0022submit\u0022 aria-label=\u0022Search notes\u0022 class=\u0022absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700\u0022\u003E\u003Csvg class=\u0022h-5 w-5\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 viewBox=\u00220 0 24 24\u0022 aria-hidden=\u0022true\u0022\u003E\u003Cpath stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 stroke-width=\u00222\u0022 d=\u0022M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/button\u003E\u003C/form\u003E\u003C/div\u003E\u003Cdiv class=\u0022flex items-center font-semibold gap-6 text-gray-700\u0022\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/\u0022\u003EHome\u003C/a\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/notes\u0022\u003ENotes\u003C/a\u003E\u003C/div\u003E\u003C/nav\u003E\u003Cmain class=\u0022flex-grow w-full bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900\u0022\u003E\u003Cdiv class=\u0022mt-10 flex min-h-screen items-center justify-center px-4 py-12 sm:px-6\u0022\u003E\u003Cdiv class=\u0022w-full max-w-4xl rounded-xl border border-slate-700 border-t-2 border-t-fuchsia-400 bg-slate-900/90 p-5 shadow-2xl shadow-slate-950/40 sm:p-8\u0022\u003E\u003Cp class=\u0022mb-3 text-center text-sm font-semibold uppercase text-fuchsia-300\u0022\u003EJoin NotesHub\u003C/p\u003E\u003Ch1 class=\u0022mb-3 text-center text-3xl fon\n\u2026[truncated]",
+        "durationMs": 60
+      },
+      {
+        "name": "upload-page-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/app_globals_0yg4wg8plh8sv.css\u0022 data-precedence=\u0022next_static/chunks/app_globals_0yg4wg8plh8sv.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_06rkbud3pyrlm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_18keh2_2xxjvh._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_17zmryeo0xejc._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_components_1mgg_ns71vv6e._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_upload_page_tsx_0ws_00kdqivvm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/favicon.svg\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody class=\u0022flex flex-col min-h-screen\u0022\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cnav class=\u0022fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md\u0022\u003E\u003Ca class=\u0022text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors\u0022 href=\u0022/\u0022\u003ENotesHub\u003C/a\u003E\u003Cdiv class=\u0022flex-1 flex justify-center px-6\u0022\u003E\u003Cform role=\u0022search\u0022 class=\u0022relative w-full max-w-lg\u0022 action=\u0022/notes\u0022 method=\u0022get\u0022\u003E\u003Cinput type=\u0022text\u0022 aria-label=\u0022Search uploaded notes\u0022 placeholder=\u0022Search Notes, Assignments, Papers, Que Banks, PPT, Reports...\u0022 class=\u0022w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400\u0022 name=\u0022q\u0022 value=\u0022\u0022/\u003E\u003Cbutton type=\u0022submit\u0022 aria-label=\u0022Search notes\u0022 class=\u0022absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700\u0022\u003E\u003Csvg class=\u0022h-5 w-5\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 viewBox=\u00220 0 24 24\u0022 aria-hidden=\u0022true\u0022\u003E\u003Cpath stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 stroke-width=\u00222\u0022 d=\u0022M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/button\u003E\u003C/form\u003E\u003C/div\u003E\u003Cdiv class=\u0022flex items-center font-semibold gap-6 text-gray-700\u0022\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/\u0022\u003EHome\u003C/a\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/notes\u0022\u003ENotes\u003C/a\u003E\u003C/div\u003E\u003C/nav\u003E\u003Cmain class=\u0022flex-grow w-full bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900\u0022\u003E\u003Cdiv class=\u0022mx-auto mt-20 w-full max-w-5xl px-4 pb-20 text-slate-100 sm:px-6\u0022\u003E\u003Cheader class=\u0022mb-8 text-center\u0022\u003E\u003Cp class=\u0022mb-3 text-sm font-semibold uppercase text-cyan-300\u0022\u003EContribute to NotesHub\u003C/p\u003E\u003Ch1 class=\u0022text-3xl font-bold text-white sm:text-4xl\u0022\u003EUpload Study Material\u003C/h1\u003E\u003Cp class=\u0022mx-auto mt-3 max-w-xl text-slate-300\u0022\u003EShare notes, assignments, and course resources with students in your community.\u003C/p\u003E\u003C/header\u003E\u003Cdiv class=\u0022rounded-xl border bor\n\u2026[truncated]",
+        "durationMs": 48
+      },
+      {
+        "name": "notes-page-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/app_globals_0yg4wg8plh8sv.css\u0022 data-precedence=\u0022next_static/chunks/app_globals_0yg4wg8plh8sv.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_06rkbud3pyrlm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_006tqphjy6_f7._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_17zmryeo0xejc._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_components_1mgg_ns71vv6e._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_notes_page_tsx_1m5gk22gjiyqf._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/favicon.svg\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody class=\u0022flex flex-col min-h-screen\u0022\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cnav class=\u0022fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md\u0022\u003E\u003Ca class=\u0022text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors\u0022 href=\u0022/\u0022\u003ENotesHub\u003C/a\u003E\u003Cdiv class=\u0022flex-1 flex justify-center px-6\u0022\u003E\u003Cform role=\u0022search\u0022 class=\u0022relative w-full max-w-lg\u0022 action=\u0022/notes\u0022 method=\u0022get\u0022\u003E\u003Cinput type=\u0022text\u0022 aria-label=\u0022Search uploaded notes\u0022 placeholder=\u0022Search Notes, Assignments, Papers, Que Banks, PPT, Reports...\u0022 class=\u0022w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400\u0022 name=\u0022q\u0022 value=\u0022\u0022/\u003E\u003Cbutton type=\u0022submit\u0022 aria-label=\u0022Search notes\u0022 class=\u0022absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700\u0022\u003E\u003Csvg class=\u0022h-5 w-5\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 viewBox=\u00220 0 24 24\u0022 aria-hidden=\u0022true\u0022\u003E\u003Cpath stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 stroke-width=\u00222\u0022 d=\u0022M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/button\u003E\u003C/form\u003E\u003C/div\u003E\u003Cdiv class=\u0022flex items-center font-semibold gap-6 text-gray-700\u0022\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/\u0022\u003EHome\u003C/a\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/notes\u0022\u003ENotes\u003C/a\u003E\u003C/div\u003E\u003C/nav\u003E\u003Cmain class=\u0022flex-grow w-full bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900\u0022\u003E\u003C!--$--\u003E\u003Cdiv class=\u0022flex min-h-screen mt-17 flex-col text-slate-100 lg:flex-row\u0022\u003E\u003Caside class=\u0022mt-1 w-full border-b border-slate-700 bg-slate-900/80 p-4 shadow-xl lg:w-72 lg:shrink-0 lg:border-b-0 lg:border-r\u0022\u003E\u003Cdiv class=\u0022flex justify-between items-center\u0022\u003E\u003Ch2 class=\u0022text-xl font-bold text-white\u0022\u003EFilter\u003C/h2\u003E\u003C/div\u003E\u003Cdiv class=\u0022mt-4 relative\u0022\u003E\u003Clabel class=\u0022text-slate-300 text-sm font-medium\u0022\u003EUniversity\u003C/label\u003E\u003Cinput type=\u0022text\u0022 placeholder=\u0022Search \u0026amp\n\u2026[truncated]",
+        "durationMs": 47
+      },
+      {
+        "name": "dashboard-page-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/app_globals_0yg4wg8plh8sv.css\u0022 data-precedence=\u0022next_static/chunks/app_globals_0yg4wg8plh8sv.css\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0qva5cupmdgep._.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/1daa_next_dist_compiled_react-dom_cjs_react-dom-client_development_0mp0cp_t-ezj9.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1q96_modules_next_dist_compiled_react-dom_cjs_react-dom_development_1sqry0_53krp4.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-dom_0grqycjrj6mju._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_react-server-dom-turbopack_164kp-67asdr9._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jmam7qwg.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_compiled_1amofcmz--cdp._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_%40swc_helpers_cjs_1r9vbqwj2323d._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1anvha4rlo79g._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-_06rkbud3pyrlm._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/_1dh94un9l_d0c._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_17zmryeo0xejc._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_components_1mgg_ns71vv6e._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/app_dashboard_page_tsx_1-vou2omp1-z2._.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/favicon.svg\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody class=\u0022flex flex-col min-h-screen\u0022\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cnav class=\u0022fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md\u0022\u003E\u003Ca class=\u0022text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors\u0022 href=\u0022/\u0022\u003ENotesHub\u003C/a\u003E\u003Cdiv class=\u0022flex-1 flex justify-center px-6\u0022\u003E\u003Cform role=\u0022search\u0022 class=\u0022relative w-full max-w-lg\u0022 action=\u0022/notes\u0022 method=\u0022get\u0022\u003E\u003Cinput type=\u0022text\u0022 aria-label=\u0022Search uploaded notes\u0022 placeholder=\u0022Search Notes, Assignments, Papers, Que Banks, PPT, Reports...\u0022 class=\u0022w-full rounded-full border border-blue-200 py-2.5 pl-5 pr-12 shadow-sm transition-all focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400\u0022 name=\u0022q\u0022 value=\u0022\u0022/\u003E\u003Cbutton type=\u0022submit\u0022 aria-label=\u0022Search notes\u0022 class=\u0022absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700\u0022\u003E\u003Csvg class=\u0022h-5 w-5\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 viewBox=\u00220 0 24 24\u0022 aria-hidden=\u0022true\u0022\u003E\u003Cpath stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 stroke-width=\u00222\u0022 d=\u0022M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/button\u003E\u003C/form\u003E\u003C/div\u003E\u003Cdiv class=\u0022flex items-center font-semibold gap-6 text-gray-700\u0022\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/\u0022\u003EHome\u003C/a\u003E\u003Ca class=\u0022hover:text-blue-600 transition-colors\u0022 href=\u0022/notes\u0022\u003ENotes\u003C/a\u003E\u003C/div\u003E\u003C/nav\u003E\u003Cmain class=\u0022flex-grow w-full bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900\u0022\u003E\u003Cmain class=\u0022min-h-screen px-6 pb-16 pt-28 text-slate-300\u0022\u003ELoading your dashboard...\u003C/main\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/main\u003E\u003Cfooter class=\u0022bg-gray-900 text-gray-300 py-4 \u0022\u003E\u003Cdiv class=\u0022max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mt-20\u0022\u003E\u003Cdiv class=\u0022space-y-3\u0022\u003E\u003Ch2 class=\u0022text-3xl font-bold text-blue-400\u0022\u003ENotesHub\u003C/h2\u003E\u003Cp class=\u0022text-white leading-relaxed\u0022\u003EA collaborative platform for students to upload, share, and explore hig\n\u2026[truncated]",
+        "durationMs": 47
+      },
+      {
+        "name": "university-data-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n{\r\n  \u0022colleges\u0022: [\r\n    \u0022OTHER\u0022,\r\n    \u0022IIT Bombay\u0022,\r\n    \u0022IIT Madras\u0022,\r\n    \u0022COEP Pune\u0022,\r\n    \u0022VNIT Nagpur\u0022,\r\n    \u0022ABC Engineering College\u0022,\r\n    \u0022Marathwada Mitra Mandals Institute of Environment and Designs college of Architecture\u0022,\r\n    \u0022Dr. Vandanatai Jagannathrao Dhone Gramin Ayurved Mahavidyalaya,  Patur\u0022,\r\n    \u0022SHRI D.D. VISPUTE COLLEGE OF SCIENCE COMMERCE AND MANAGEMENT, RAIGAD\u0022,\r\n    \u0022MATUSHRI KANBAI LALBAI AND MOTIBAI LOHANA KANYASHALA AND BALIKAGRAH CHARITABLE TRUSTS ADHIA COLLEGE OF LAW\u0022,\r\n    \u0022PRASHASKIYA SEVA MAHAVIDYALAY \u0022,\r\n    \u0022JAMIA COLLEGE OF LAW\u0022,\r\n    \u0022BHAGINI MANDAL CHOPD\u0027S COLLEGE OF SOCIAL WORK, CHOPDA.\u0022,\r\n    \u0022S.R.B Mahila Mahavidyalaya Salekasa, Gondia\u0022,\r\n    \u0022Aadarsh Shikshan Prasarak Mandal, K.T. Patil College of Education, Tambri Vibhag, Osmanabad.\u0022,\r\n    \u0022Matoshri Subhadrabai Patil Arts and Late Pandurangji Thakare Commerce College, Manora.\u0022,\r\n    \u0022College of Engineering \u0026 Technology, Akola.\u0022,\r\n    \u0022Sadhana College of Commerce English Medium Gadhinglaj Tal Gadhinglaj Dist Kolhapur\u0022,\r\n    \u0022TRIMURTI ARTS COMMERCE AND SCIENCE COLLEGE\u0022,\r\n    \u0022S.K.B. College of Pharmacy, Gada, Kamptee\u0022,\r\n    \u0022SUPRIYA MAHILA  ARTS COMMERCE AND SCIENCE COLLEGE JAFRABAD\u0022,\r\n    \u0022FABTECH TECHNICAL CAMPUS, COLLEGE OF ENGINEERING AND RESEARCH,  SANGOLA\u0022,\r\n    \u0022Mahatma Gandhi Missions Institute of Physiotherapy, Aurangabad\u0022,\r\n    \u0022Shri AmolakJain Vidya Prasarak Mandals College of Pharmaceutical Science and Research Center Kada  \u0022,\r\n    \u0022Sansthamata Sushiladevi Salunkhe Mahila Shikshan Shastra Mahavidyalaya, TASGAON\u0022,\r\n    \u0022College of Computer Science \u0026 Information Technology, Latur\u0022,\r\n    \u0022Central Provincial Arts Commerce and Science Mahila Mahavidyalaya\u0022,\r\n    \u0022ASHWAMEDH NIGHT COLLEGE SAVEDI AHMEDNAGAR\u0022,\r\n    \u0022Habib Educational \u0026 Welfare Society\u0027s M.S. College of Arts,Commerce,Science and B M S Mumbra  Dist Thane.\u0022,\r\n    \u0022SANT GAJANAN MAHARAJ ARTS AND COMMERCE COLLEGE, PENDHARI MAKTA\u0022,\r\n    \u0022LATE SITABAI SHENDE MAHILA MAHAVIDYALAYA, SINDEWAHI\u0022,\r\n    \u0022DADASAHEB MOKASHI COLLEGE OF AGRICULTURE, RAJMACHI\u0022,\r\n    \u0022THE SHRAMIK VIDHYRATHI DNYANSEVA SANSTHA AMDAR DEEPAKBHAI KESARKAR SCIENCE COLLEGE, SINDHUDURG\u0022,\r\n    \u0022Savitribai Phule Mahila  adhyapak Mahavidyalaya, Vasarni, Nanded\u0022,\r\n    \u0022Punyashlok Ahileyadevi Holkar College, Ranisawagaon Tq. Gangakhed\u0022,\r\n    \u0022Sant Bhagwan Baba Arts \u0026 Science College, Bodhadi, Tq. Kinwat\u0022,\r\n    \u0022Lalit Kala Mahavdiyalaya, Parbhani\u0022,\r\n    \u0022CMFs College of Physiotherapy, Pune\u0022,\r\n    \u0022200022-K.S.WANI ADVANCED STUDY CENTRE IN MARATHI, DHULE.\u0022,\r\n    \u0022JAMIA ISLAMIA ISHAATUL ULOOMS, JAMIA COLLEGE OF EDU. (B.ED), AKKALKUWA.\u0022,\r\n    \u0022Sanjivani College of Engineering, At. Sahajanandnagar, Post. Shingnapur, Tal. Kopargaon, Dist. Ahmednagar 423603\u0022,\r\n    \u0022Shree BH Govt. Medical College, Chakkar Bardi, Dhule\u0022,\r\n    \u0022Navasanjeevan Shikshan Prasarak Mandals Smt. Sumitrabai Thakare Training College of Nursing (B.Sc.), Darwha Road, Yavatmal, Dist. Yavatmal\u0022,\r\n    \u0022Ahmednagar Homoeopathy College, Ahmednagar\u0022,\r\n    \u0022Dr. Ghali College, GADHINGLAJ\u0022,\r\n    \u0022Vasudeo Gavade Education and Charitable Trust Ideal Institute of Management, Kondigre, Gat\u0022,\r\n    \u0022Venutai Chavan College, Vidyanagar, KARAD\u0022,\r\n    \u0022Smt. Kasturbai Walchand College of Arts \u0026 Science, Woodhouse Road, Rajnemi Campus\u0022,\r\n    \u0022Yeshwant Mahavidyalaya,Wardha\u0022,\r\n    \u0022Late Madhuribai Deshmukh Sharirik Shikshan Mahavidyalaya, Hingna, Nagpur\u0022,\r\n    \u0022SHRI SANT GADGE BABA HINDI MAHAVIDYALAYA, BHUSAWAL\u0022,\r\n    \u0022Late Nirdhan Patil Waghaye Arts Commerce and Science College, Sangadi\u0022,\r\n    \u0022Purushottam Thote College, Nagpur\u0022,\r\n    \u0022Nutan Adarsh Arts, Commerce and Smt. M.H. Wegad Science College, Umrer, Dist-Nagpur\u0022,\r\n    \u0022Anjuman Girls Arts College, Sadar\u0022,\r\n    \u0022Shri Shankarprasad Agnihotri College of Engineering, sindi (meghe), Wardha\u0022,\r\n    \u0022Umme Salma Girls Arts and Science College, Rashidnagar\u0022,\r\n    \u0022Dhote Bandhu Science College,\u0022,\r\n    \u0022National Centre for Rural Development\u0060s Sterling College of Arts, Science, \u0026 Commerce, Plot No.93, Sector 19, Nerul, Navi Mumbai: 400 706.\u0022,\r\n    \u0022Sir J J  School of Art  Dr D N Road Mumbai  400 001 (Painting)\u0022,\r\n    \n\u2026[truncated]",
+        "durationMs": 13
+      }
+    ],
+    "executions": [
+      {
+        "source": "devServer",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "frontend-lint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "lint"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "frontend-type-check",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npx.CMD",
+        "args": [
+          "tsc",
+          "--noEmit"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "frontend-production-build",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "homepage-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "login-page-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "signup-page-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "upload-page-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "notes-page-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "dashboard-page-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "university-data-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "C:\\Users\\USER\\OneDrive\\Desktop\\notes-platform\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

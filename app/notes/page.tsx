@@ -72,7 +72,10 @@ function NotesContent() {
         setUniversities(data.colleges || []);
         setCourses(data.branches || []);
       })
-      .catch((err) => console.error("Error loading JSON:", err));
+      .catch(() => {
+        setUniversities([]);
+        setCourses([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -274,7 +277,7 @@ function NotesContent() {
           </label>
 
           <div className="flex flex-wrap gap-2 mt-2">
-            {["Notes", "Assignments", "Papers", "Que Banks", "PPT", "Reports"].map((t) => (
+            {["Notes", "Assignments", "Papers", "Que Banks", "PPT", "Reports", "Other"].map((t) => (
               <button
                 key={t}
                 type="button"

@@ -3,24 +3,23 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface NoteSummary {
-  university?: string;
-  studyType?: string;
+  total: number;
+  universities: number;
+  studyTypes: number;
 }
 
 export default function Home() {
-  const [notes, setNotes] = useState<NoteSummary[]>([]);
+  const [stats, setStats] = useState<NoteSummary>({ total: 0, universities: 0, studyTypes: 0 });
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/notes", { signal: controller.signal })
+    fetch("/api/notes/stats", { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error("Unable to load note totals");
         return response.json();
       })
-      .then((data) => setNotes(data.notes || []))
-      .catch((error) => {
-        if (error.name !== "AbortError") console.error("Could not load note totals:", error);
-      });
+      .then((data) => setStats(data.stats))
+      .catch(() => undefined);
 
     const elements = document.querySelectorAll(".fade-up");
     const timers = Array.from(elements, (element, index) =>
@@ -32,9 +31,6 @@ export default function Home() {
       timers.forEach(window.clearTimeout);
     };
   }, []);
-
-  const universityCount = new Set(notes.map((note) => note.university).filter(Boolean)).size;
-  const materialCount = new Set(notes.map((note) => note.studyType).filter(Boolean)).size;
 
   return (
     <div className="text-white">
@@ -84,9 +80,9 @@ export default function Home() {
       <section id="stats" className="border-y border-slate-700 bg-slate-950/35 px-6 py-10 md:py-12">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-0">
           {[
-            { label: "Shared study materials", value: notes.length, color: "text-cyan-300" },
-            { label: "Universities represented", value: universityCount, color: "text-blue-300" },
-            { label: "Material types", value: materialCount, color: "text-fuchsia-300" },
+            { label: "Shared study materials", value: stats.total, color: "text-cyan-300" },
+            { label: "Universities represented", value: stats.universities, color: "text-blue-300" },
+            { label: "Material types", value: stats.studyTypes, color: "text-fuchsia-300" },
           ].map((stat, index) => (
             <div key={stat.label} className={`flex items-center gap-5 sm:px-8 ${index > 0 ? "sm:border-l sm:border-slate-700" : "sm:pl-0"}`}>
               <p className={`min-w-16 text-4xl font-bold tabular-nums ${stat.color}`}>{stat.value}</p>

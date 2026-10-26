@@ -22,7 +22,6 @@
 //         setUniversities(data.colleges || []);
 //         setCourses(data.branches || []);
 //       })
-//       .catch((err) => console.error("Error loading JSON:", err));
 //   }, []);
 
 //   // Filter logic

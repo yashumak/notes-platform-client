@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 
 interface NavbarUser {
   name: string;
@@ -20,8 +20,10 @@ export default function Navbar() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const query = window.location.pathname === "/notes" ? params.get("q")?.trim() || "" : "";
-    setSearchText(query);
-    setSearchApplied(Boolean(query));
+    startTransition(() => {
+      setSearchText(query);
+      setSearchApplied(Boolean(query));
+    });
   }, []);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function Navbar() {
         .then((response) => {
           if (!response.ok) throw new Error("Could not clear expired session cookie");
         })
-        .catch((error) => console.error("Could not clear expired session:", error));
+        .catch(() => undefined);
     };
 
     const loadUser = async () => {

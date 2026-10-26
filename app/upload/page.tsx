@@ -96,6 +96,7 @@ const UploadNote: React.FC = () => {
     "Que Banks",
     "PPT",
     "Reports",
+    "Other",
   ];
 
   const [universities, setUniversities] = useState<string[]>([]);
@@ -108,8 +109,9 @@ const UploadNote: React.FC = () => {
         const data = await response.json();
         setUniversities(data.colleges);
         setBranches(data.branches);
-      } catch (error) {
-        console.error("Error fetching engineering data:", error);
+      } catch {
+        setUniversities([]);
+        setBranches([]);
       }
     };
     fetchData();
@@ -127,8 +129,7 @@ const UploadNote: React.FC = () => {
         setStudyType(pendingUpload.studyType);
         setYear(pendingUpload.year);
       })
-      .catch((error: unknown) => {
-        console.error("Could not restore saved upload:", error);
+      .catch(() => {
         setUploadError("Could not restore your saved upload. Please select the file and enter its details again.");
       });
   }, []);
@@ -171,8 +172,7 @@ const UploadNote: React.FC = () => {
         try {
           await savePendingUpload({ file, title, description, university, branch, studyType, year });
           router.replace("/login?redirect=%2Fupload");
-        } catch (error: unknown) {
-          console.error("Could not save upload before login:", error);
+        } catch {
           setUploadError("Your browser could not save this file for login. Please try again or sign in in another tab before uploading.");
         }
         return;
@@ -185,8 +185,7 @@ const UploadNote: React.FC = () => {
       } else {
         setUploadError(data.message || "Upload failed. Please try again.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       setUploadError("Something went wrong while uploading. Please try again.");
     } finally {
       setLoading(false);
