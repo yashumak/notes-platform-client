@@ -81,7 +81,11 @@ function NotesContent() {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/notes", { signal: controller.signal })
+    fetch("/api/notes", {
+      cache: "no-store",
+      credentials: "omit",
+      signal: controller.signal,
+    })
       .then((response) => {
         if (!response.ok) throw new Error("Could not load uploaded notes");
         return response.json();
