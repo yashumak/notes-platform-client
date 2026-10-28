@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 interface AccountProfile {
   name: string;
@@ -35,6 +36,9 @@ const formatFileSize = (bytes: number) => {
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
+  const [colleges, setColleges] = useState<string[]>([]);
+  const [branches, setBranches] = useState<string[]>([]);
+  const [profileOptionsError, setProfileOptionsError] = useState("");
   const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,12 +51,44 @@ export default function DashboardPage() {
     year: "",
   });
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [collegeSearch, setCollegeSearch] = useState("");
+  const [showCollegeList, setShowCollegeList] = useState(false);
+  const collegeDropdownRef = useRef<HTMLDivElement>(null);
+  const [branchSearch, setBranchSearch] = useState("");
+  const [showBranchList, setShowBranchList] = useState(false);
+  const branchDropdownRef = useRef<HTMLDivElement>(null);
   const [profileSaveError, setProfileSaveError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
+
+  useClickOutside(collegeDropdownRef, () => setShowCollegeList(false), showCollegeList);
+  useClickOutside(branchDropdownRef, () => setShowBranchList(false), showBranchList);
+
+  useEffect(() => {
+    const loadProfileOptions = async () => {
+      try {
+        const response = await fetch("/data/engineeringData.json");
+        if (!response.ok) throw new Error("Could not load college and branch options.");
+
+        const data: { colleges?: unknown; branches?: unknown } = await response.json();
+        if (!Array.isArray(data.colleges) || !Array.isArray(data.branches)) {
+          throw new Error("College and branch options are unavailable.");
+        }
+
+        setColleges([...new Set(data.colleges.filter((option): option is string => typeof option === "string"))]);
+        setBranches([...new Set(data.branches.filter((option): option is string => typeof option === "string"))]);
+      } catch (optionsError) {
+        setProfileOptionsError(
+          optionsError instanceof Error ? optionsError.message : "Could not load college and branch options."
+        );
+      }
+    };
+
+    loadProfileOptions();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -101,13 +137,19 @@ export default function DashboardPage() {
   }, [router]);
 
   const openProfileEditor = () => {
+    const university = profile?.university ?? "";
+    const course = profile?.course ?? "";
     setProfileForm({
       name: profile?.name ?? "",
       email: profile?.email ?? "",
-      university: profile?.university ?? "",
-      course: profile?.course ?? "",
+      university,
+      course,
       year: profile?.year ?? "",
     });
+    setCollegeSearch(university);
+    setBranchSearch(course);
+    setShowCollegeList(false);
+    setShowBranchList(false);
     setProfilePhoto(null);
     setProfileSaveError("");
     setEditingProfile(true);
@@ -115,6 +157,8 @@ export default function DashboardPage() {
 
   const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setShowCollegeList(false);
+    setShowBranchList(false);
     setProfileSaveError("");
     setSavingProfile(true);
 
@@ -198,6 +242,14 @@ export default function DashboardPage() {
       setDeletingNoteId(null);
     }
   };
+
+  const matchingColleges = colleges.filter((college) =>
+    college.toLowerCase().includes(collegeSearch.toLowerCase())
+  );
+  const visibleColleges = matchingColleges.slice(0, 100);
+  const matchingBranches = branches.filter((branch) =>
+    branch.toLowerCase().includes(branchSearch.toLowerCase())
+  );
 
   if (loading) {
     return <main className="min-h-screen px-6 pb-16 pt-28 text-slate-300">Loading your dashboard...</main>;
@@ -306,43 +358,139 @@ export default function DashboardPage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="profile-university" className="text-sm font-medium text-slate-200">College / University</label>
-                  <input
-                    id="profile-university"
-                    name="university"
-                    type="text"
-                    required
-                    maxLength={200}
-                    value={profileForm.university}
-                    onChange={(event) => setProfileForm({ ...profileForm, university: event.target.value })}
-                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                  />
+                  <div ref={collegeDropdownRef} className="relative">
+                    <input
+                      id="profile-university"
+                      name="university"
+                      type="text"
+                      required
+                      maxLength={200}
+                      autoComplete="off"
+                      value={collegeSearch}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setCollegeSearch(value);
+                        setProfileForm({ ...profileForm, university: value });
+                        setShowCollegeList(true);
+                      }}
+                      onFocus={() => setShowCollegeList(true)}
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={showCollegeList}
+                      aria-controls="profile-university-options"
+                      className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                      placeholder="Search college or university"
+                    />
+                    {showCollegeList && (
+                      <ul
+                        id="profile-university-options"
+                        role="listbox"
+                        className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
+                      >
+                        {visibleColleges.map((college) => (
+                            <li key={college}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={profileForm.university === college}
+                                className="w-full px-4 py-2 text-left text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
+                                onClick={() => {
+                                  setCollegeSearch(college);
+                                  setProfileForm({ ...profileForm, university: college });
+                                  setShowCollegeList(false);
+                                }}
+                              >
+                                {college}
+                              </button>
+                            </li>
+                          ))}
+                        {matchingColleges.length === 0 && (
+                          <li className="px-4 py-2 text-slate-400">No matches found</li>
+                        )}
+                        {matchingColleges.length > 100 && (
+                          <li className="px-4 py-2 text-xs text-slate-400">Showing the first 100 matches. Type to narrow your search.</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="profile-course" className="text-sm font-medium text-slate-200">Branch / course</label>
-                  <input
-                    id="profile-course"
-                    name="course"
-                    type="text"
-                    required
-                    maxLength={100}
-                    value={profileForm.course}
-                    onChange={(event) => setProfileForm({ ...profileForm, course: event.target.value })}
-                    className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                  />
+                  <div ref={branchDropdownRef} className="relative">
+                    <input
+                      id="profile-course"
+                      name="course"
+                      type="text"
+                      required
+                      maxLength={100}
+                      autoComplete="off"
+                      value={branchSearch}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setBranchSearch(value);
+                        setProfileForm({ ...profileForm, course: value });
+                        setShowBranchList(true);
+                      }}
+                      onFocus={() => setShowBranchList(true)}
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={showBranchList}
+                      aria-controls="profile-course-options"
+                      className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                      placeholder="Search branch or course"
+                    />
+                    {showBranchList && (
+                      <ul
+                        id="profile-course-options"
+                        role="listbox"
+                        className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
+                      >
+                        {matchingBranches.map((branch) => (
+                            <li key={branch}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={profileForm.course === branch}
+                                className="w-full px-4 py-2 text-left text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
+                                onClick={() => {
+                                  setBranchSearch(branch);
+                                  setProfileForm({ ...profileForm, course: branch });
+                                  setShowBranchList(false);
+                                }}
+                              >
+                                {branch}
+                              </button>
+                            </li>
+                          ))}
+                        {matchingBranches.length === 0 && (
+                          <li className="px-4 py-2 text-slate-400">No matches found</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="profile-year" className="text-sm font-medium text-slate-200">Year</label>
-                  <input
+                  <select
                     id="profile-year"
                     name="year"
-                    type="text"
                     required
-                    maxLength={50}
                     value={profileForm.year}
                     onChange={(event) => setProfileForm({ ...profileForm, year: event.target.value })}
                     className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                  />
+                  >
+                    <option value="">Select year</option>
+                    {["1st Year", "2nd Year", "3rd Year", "4th Year", "Final Year"].map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                    {profileForm.year && !["1st Year", "2nd Year", "3rd Year", "4th Year", "Final Year"].includes(profileForm.year) && (
+                      <option value={profileForm.year}>{profileForm.year}</option>
+                    )}
+                  </select>
                 </div>
+                {profileOptionsError && (
+                  <p className="sm:col-span-2 text-sm text-amber-300" role="status">{profileOptionsError} You can still enter these values manually.</p>
+                )}
                 <div className="sm:col-span-2">
                   <label htmlFor="profile-photo" className="text-sm font-medium text-slate-200">Profile photo</label>
                   <input

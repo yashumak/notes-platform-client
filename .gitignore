@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -13,16 +13,32 @@
 # testing
 /coverage
 
+# local caches and temporary files
+.cache/
+.npm/
+tmp/
+temp/
+*.tmp
+*.temp
+.eslintcache
+
 # next.js
 /.next/
 /out/
 
 # production
 /build
+/dist/
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
 
 # debug
 npm-debug.log*
@@ -31,7 +47,14 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+!.env.template
+!.env.*.template
 
 # vercel
 .vercel
@@ -39,3 +62,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local editor state; keep shareable VS Code settings and tasks
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/workspace.xml
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/shelf/
+.idea/**/httpRequests/
+*.swp
+*.swo
+*~

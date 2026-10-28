@@ -1,7 +1,8 @@
 'use client';
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 interface UploadedNote {
   _id: string;
@@ -48,7 +49,9 @@ function NotesContent() {
   const [courseSearch, setCourseSearch] = useState("");
 
   const [showUniList, setShowUniList] = useState(false);
+  const universityDropdownRef = useRef<HTMLDivElement>(null);
   const [showCourseList, setShowCourseList] = useState(false);
+  const courseDropdownRef = useRef<HTMLDivElement>(null);
   const [subjectSearch, setSubjectSearch] = useState("");
   const [studyTypeFilter, setStudyTypeFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
@@ -63,6 +66,9 @@ function NotesContent() {
   const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [notesError, setNotesError] = useState("");
+
+  useClickOutside(universityDropdownRef, () => setShowUniList(false), showUniList);
+  useClickOutside(courseDropdownRef, () => setShowCourseList(false), showCourseList);
 
   // ✅ Load JSON automatically from public folder
   useEffect(() => {
@@ -185,45 +191,47 @@ function NotesContent() {
         <div className="mt-4 relative">
           <label className="text-slate-300 text-sm font-medium">University</label>
 
-          <input
-            type="text"
-            placeholder="Search & select your college"
-            className="w-full px-4 py-3 bg-slate-800 border border-slate-600 text-slate-100 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
-            value={uniSearch}
-            onChange={(e) => {
-              setUniSearch(e.target.value);
-              setShowUniList(true);
-            }}
-            onFocus={() => setShowUniList(true)}
-          />
+          <div ref={universityDropdownRef}>
+            <input
+              type="text"
+              placeholder="Search & select your college"
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-600 text-slate-100 placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400"
+              value={uniSearch}
+              onChange={(e) => {
+                setUniSearch(e.target.value);
+                setShowUniList(true);
+              }}
+              onFocus={() => setShowUniList(true)}
+            />
 
-          {/* Dropdown list */}
-          {showUniList && (
-            <ul className="absolute z-20 w-full bg-slate-800 border border-slate-600 shadow-xl max-h-56 overflow-y-auto rounded-lg mt-1">
-              {filteredUniversities.length > 0 ? (
-                filteredUniversities.map((uni, i) => (
-                  <li
-                    key={i}
-                    className="px-4 py-2 text-slate-200 hover:bg-slate-700 hover:text-cyan-200 cursor-pointer"
-                    onClick={() => {
-                      setUniSearch(uni);
+            {/* Dropdown list */}
+            {showUniList && (
+              <ul className="absolute z-20 w-full bg-slate-800 border border-slate-600 shadow-xl max-h-56 overflow-y-auto rounded-lg mt-1">
+                {filteredUniversities.length > 0 ? (
+                  filteredUniversities.map((uni, i) => (
+                    <li
+                      key={i}
+                      className="px-4 py-2 text-slate-200 hover:bg-slate-700 hover:text-cyan-200 cursor-pointer"
+                      onClick={() => {
+                        setUniSearch(uni);
 
-                      setShowUniList(false);
-                    }}
-                  >
-                    {uni}
-                  </li>
-                ))
-              ) : (
-                <li className="px-4 py-2 text-slate-400">No matches found</li>
-              )}
-            </ul>
-          )}
+                        setShowUniList(false);
+                      }}
+                    >
+                      {uni}
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-2 text-slate-400">No matches found</li>
+                )}
+              </ul>
+            )}
+          </div>
         </div>
 
 
         {/* Course / Branch */}
-        <div className="mt-4 relative">
+        <div ref={courseDropdownRef} className="mt-4 relative">
           <label className="text-slate-300 text-sm font-medium">Course / Branch</label>
 
           <input

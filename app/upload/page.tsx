@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 interface UploadResponse {
   success: boolean;
@@ -83,8 +84,13 @@ const UploadNote: React.FC = () => {
 
   const [uniSearch, setUniSearch] = useState("");
   const [showUniList, setShowUniList] = useState(false);
+  const universityDropdownRef = useRef<HTMLDivElement>(null);
   const [branchSearch, setBranchSearch] = useState("");
   const [showBranchList, setShowBranchList] = useState(false);
+  const branchDropdownRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(universityDropdownRef, () => setShowUniList(false), showUniList);
+  useClickOutside(branchDropdownRef, () => setShowBranchList(false), showBranchList);
 
   const [loading, setLoading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -252,43 +258,45 @@ const UploadNote: React.FC = () => {
           {/* University */}
           <div>
             <label className="text-sm font-medium text-slate-200">University/College</label>
-            <input
-              type="text"
-              value={uniSearch}
-              onChange={(e) => {
-                setUniSearch(e.target.value);
-                setShowUniList(true);
-              }}
-              onFocus={() => setShowUniList(true)}
-              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-              placeholder="Search university"
-            />
+            <div ref={universityDropdownRef}>
+              <input
+                type="text"
+                value={uniSearch}
+                onChange={(e) => {
+                  setUniSearch(e.target.value);
+                  setShowUniList(true);
+                }}
+                onFocus={() => setShowUniList(true)}
+                className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                placeholder="Search university"
+              />
 
-            {showUniList && (
-              <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
-                {universities
-                  .filter((u) =>
-                    u.toLowerCase().includes(uniSearch.toLowerCase())
-                  )
-                  .map((u, i) => (
-                    <li
-                      key={i}
-                      className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
-                      onClick={() => {
-                        setUniSearch(u);
-                        setUniversity(u);
-                        setShowUniList(false);
-                      }}
-                    >
-                      {u}
-                    </li>
-                  ))}
-              </ul>
-            )}
+              {showUniList && (
+                <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
+                  {universities
+                    .filter((u) =>
+                      u.toLowerCase().includes(uniSearch.toLowerCase())
+                    )
+                    .map((u, i) => (
+                      <li
+                        key={i}
+                        className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
+                        onClick={() => {
+                          setUniSearch(u);
+                          setUniversity(u);
+                          setShowUniList(false);
+                        }}
+                      >
+                        {u}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           {/* Branch */}
-          <div>
+          <div ref={branchDropdownRef}>
             <label className="text-sm font-medium text-slate-200">Branch</label>
             <input
               type="text"
