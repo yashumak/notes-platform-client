@@ -10,7 +10,7 @@
  */
 export default function HelpFaqPage() {
   return (
-    <main className="min-h-screen px-6 py-30 text-slate-100">
+    <main className="min-h-screen px-4 py-20 text-slate-100 sm:px-6 sm:py-30">
       <div className="mx-auto max-w-4xl">
         <header className="border-b border-slate-700 pb-10">
           <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">Help center</p>
@@ -42,7 +42,7 @@ export default function HelpFaqPage() {
               How do I report a problem?<span className="float-right text-cyan-300 transition-transform group-open:rotate-45">+</span>
             </summary>
             <p className="mt-4 max-w-3xl leading-7 text-slate-300">
-              Email <a className="text-cyan-300 underline underline-offset-4 hover:text-cyan-100" href="mailto:genteryourname296@gmail.com">genteryourname296@gmail.com</a> with the page or material details.
+              Email <a className="break-all text-cyan-300 underline underline-offset-4 hover:text-cyan-100" href="mailto:genteryourname296@gmail.com">genteryourname296@gmail.com</a> with the page or material details.
             </p>
           </details>
         </div>

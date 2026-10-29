@@ -406,20 +406,20 @@ function NotesContent() {
 
                 <dl className="mt-4 space-y-2 text-sm">
                   {note.university && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <dt className="shrink-0 text-slate-500">University</dt>
-                      <dd className="min-w-0 truncate text-slate-300">{note.university}</dd>
+                      <dd className="min-w-0 wrap-break-word text-slate-300">{note.university}</dd>
                     </div>
                   )}
                   {note.course && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <dt className="shrink-0 text-slate-500">Course</dt>
-                      <dd className="min-w-0 truncate text-slate-300">{note.course}</dd>
+                      <dd className="min-w-0 wrap-break-word text-slate-300">{note.course}</dd>
                     </div>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <dt className="shrink-0 text-slate-500">File</dt>
-                    <dd className="min-w-0 truncate text-slate-300">{note.fileName}</dd>
+                    <dd className="min-w-0 wrap-break-word text-slate-300">{note.fileName}</dd>
                   </div>
                   {note.fileSize !== undefined && (
                     <div className="flex gap-2">

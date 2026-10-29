@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 py-4 ">
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mt-20">
+    <footer className="bg-gray-900 py-10 text-gray-300 sm:py-12">
+      <div className="mx-auto mt-0 grid max-w-6xl grid-cols-1 gap-8 px-4 sm:grid-cols-2 sm:gap-10 sm:px-6 lg:grid-cols-4">
 
         {/* Logo + About */}
         <div className="space-y-3">
@@ -42,14 +42,14 @@ export default function Footer() {
         {/* Contact + Socials */}
         <div>
           <h3 className="text-xl font-semibold cursor-pointer text-white mb-4">Connect With Us</h3>
-          <p className="text-gray-400 cursor-pointer">Email: genteryourname296@gmail.com</p>
+          <a className="break-all text-gray-400 transition-colors hover:text-white" href="mailto:genteryourname296@gmail.com">Email: genteryourname296@gmail.com</a>
 
         </div>
       </div>
 
       {/* Bottom Section */}
-      <div className="text-center border-t border-gray-700 mt-10 pt-6 text-gray-400">
-        <p>
+      <div className="mt-8 border-t border-gray-700 px-4 pt-6 text-center text-gray-400 sm:mt-10 sm:px-6">
+        <p className="text-sm sm:text-base">
           © {new Date().getFullYear()} <span className="text-white font-semibold">NotesHub</span>.
           All Rights Reserved.
         </p>

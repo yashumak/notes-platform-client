@@ -10,7 +10,7 @@
  */
 export default function TermsPage() {
   return (
-    <main className="min-h-screen px-6 py-30 text-slate-100">
+    <main className="min-h-screen px-4 py-20 text-slate-100 sm:px-6 sm:py-30">
       <article className="mx-auto max-w-4xl">
         <header className="border-b border-slate-700 pb-10">
           <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">Policies</p>
@@ -36,7 +36,7 @@ export default function TermsPage() {
           <section className="py-8">
             <h2 className="text-xl font-semibold text-fuchsia-200">Moderation and questions</h2>
             <p className="mt-3 leading-7 text-slate-300">
-              Content that violates these terms or applicable law may be removed. For questions about these terms, contact <a className="text-cyan-300 underline underline-offset-4 hover:text-cyan-100" href="mailto:genteryourname296@gmail.com">genteryourname296@gmail.com</a>.
+              Content that violates these terms or applicable law may be removed. For questions about these terms, contact <a className="break-all text-cyan-300 underline underline-offset-4 hover:text-cyan-100" href="mailto:genteryourname296@gmail.com">genteryourname296@gmail.com</a>.
             </p>
           </section>
         </div>

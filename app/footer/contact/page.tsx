@@ -10,7 +10,7 @@
  */
 export default function ContactPage() {
   return (
-    <main className="min-h-screen px-6 py-30 text-slate-100">
+    <main className="min-h-screen px-4 py-20 text-slate-100 sm:px-6 sm:py-30">
       <div className="mx-auto max-w-4xl">
         <header className="border-b border-slate-700 pb-10">
           <p className="mb-3 text-sm font-semibold uppercase text-cyan-300">Contact</p>

@@ -16,6 +16,7 @@ export default function Navbar() {
   const [authChecked, setAuthChecked] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchApplied, setSearchApplied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -25,6 +26,15 @@ export default function Navbar() {
       setSearchApplied(Boolean(query));
     });
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -99,21 +109,18 @@ export default function Navbar() {
   }, [router]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex w-full items-center justify-between border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-6 py-3 shadow-md">
+    <nav className="fixed inset-x-0 top-0 z-50 w-full border-b border-blue-100 bg-linear-to-r from-blue-50 to-white px-3 py-3 shadow-md sm:px-6">
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <Link href="/" className="text-2xl font-extrabold tracking-wide text-blue-700 transition-colors hover:text-blue-800 sm:text-3xl">
+          NotesHub
+        </Link>
 
-      {/* Left Logo */}
-      <Link href="/" className="text-3xl font-extrabold text-blue-700 tracking-wide hover:text-blue-800 transition-colors">
-        NotesHub
-      </Link>
-
-      {/* Center Search Bar */}
-      <div className="flex-1 flex justify-center px-6">
-        <form action="/notes" method="get" role="search" className="relative w-full max-w-lg">
+        <form action="/notes" method="get" role="search" className="relative hidden min-w-0 max-w-lg flex-1 justify-center lg:flex">
           <input
-            type="text"
+            type="search"
             name="q"
             aria-label="Search uploaded notes"
-            placeholder="Search Notes, Assignments, Papers, Que Banks, PPT, Reports..."
+            placeholder="Search notes, assignments, papers, and more..."
             value={searchText}
             onChange={(event) => {
               setSearchText(event.target.value);
@@ -148,53 +155,119 @@ export default function Navbar() {
             </button>
           )}
         </form>
-      </div>
 
-      {/* Right Links */}
-      <div className="flex items-center font-semibold gap-6 text-gray-700">
-        <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
-        <Link href="/notes" className="hover:text-blue-600 transition-colors">Notes</Link>
+        <div className="hidden items-center gap-4 font-semibold text-gray-700 lg:flex xl:gap-6">
+          <Link href="/" className="transition-colors hover:text-blue-600">Home</Link>
+          <Link href="/notes" className="transition-colors hover:text-blue-600">Notes</Link>
+          {authChecked && (user ? (
+            <Link
+              href="/dashboard"
+              aria-label={`Account for ${user.name}`}
+              className="flex max-w-44 items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-2 text-blue-700 shadow transition-colors hover:bg-blue-50"
+            >
+              {user.profilePhotoUrl ? (
+                <Image
+                  src={user.profilePhotoUrl}
+                  alt=""
+                  width={32}
+                  height={32}
+                  unoptimized
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                </svg>
+              )}
+              <span className="truncate">{user.name}</span>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="rounded-full bg-blue-600 px-5 py-2 text-white shadow transition-all hover:bg-blue-700">
+                Login
+              </Link>
+              <Link href="/signup" className="rounded-full border-2 border-blue-600 bg-white px-5 py-2 text-blue-600 shadow transition-all hover:bg-blue-50">
+                Register
+              </Link>
+            </>
+          ))}
+        </div>
 
-        {authChecked && (user ? (
-          <Link
-            href="/dashboard"
-            aria-label={`Account for ${user.name}`}
-            className="flex max-w-44 items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-2 text-blue-700 shadow transition-colors hover:bg-blue-50"
-          >
-            {user.profilePhotoUrl ? (
-              <Image
-                src={user.profilePhotoUrl}
-                alt=""
-                width={32}
-                height={32}
-                unoptimized
-                className="h-8 w-8 shrink-0 rounded-full object-cover"
-              />
+        <button
+          type="button"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-blue-200 text-blue-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:hidden"
+        >
+          {menuOpen ? (
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+
+        <div
+          id="mobile-navigation"
+          className={`${menuOpen ? "flex" : "hidden"} w-full flex-col gap-3 border-t border-blue-100 pt-3 lg:hidden`}
+        >
+          <form action="/notes" method="get" role="search" onSubmit={() => setMenuOpen(false)} className="relative w-full">
+            <input
+              type="search"
+              name="q"
+              aria-label="Search uploaded notes"
+              placeholder="Search notes, courses, and topics"
+              value={searchText}
+              onChange={(event) => {
+                setSearchText(event.target.value);
+                setSearchApplied(false);
+              }}
+              className="w-full rounded-full border border-blue-200 py-2.5 pl-4 pr-12 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            {searchApplied ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => {
+                  setSearchText("");
+                  setSearchApplied(false);
+                  setMenuOpen(false);
+                  router.push("/notes");
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
             ) : (
-              <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-              </svg>
+              <button
+                type="submit"
+                aria-label="Search notes"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
             )}
-            <span className="truncate">{user.name}</span>
-          </Link>
-        ) : (
-          <>
-            <Link
-              href="/login"
-              className="rounded-full bg-blue-600 px-5 py-2 text-white shadow transition-all hover:bg-blue-700"
-            >
-              Login
-            </Link>
-
-            <Link
-              href="/signup"
-              className="rounded-full border-2 border-blue-600 bg-white px-5 py-2 text-blue-600 shadow transition-all hover:bg-blue-50"
-            >
-              Register
-            </Link>
-          </>
-        ))}
-
+          </form>
+          <Link href="/" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2 font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700">Home</Link>
+          <Link href="/notes" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2 font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700">Notes</Link>
+          {authChecked && (user ? (
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2 font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700">My account</Link>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-full bg-blue-600 px-4 py-2.5 text-center font-semibold text-white shadow hover:bg-blue-700">Login</Link>
+              <Link href="/signup" onClick={() => setMenuOpen(false)} className="rounded-full border-2 border-blue-600 bg-white px-4 py-2.5 text-center font-semibold text-blue-600 shadow hover:bg-blue-50">Register</Link>
+            </div>
+          ))}
+        </div>
       </div>
     </nav>
   );

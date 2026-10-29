@@ -214,7 +214,7 @@ const UploadNote: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {/* File Input */}
-          <div className="col-span-2">
+          <div className="md:col-span-2">
             <label className="text-sm font-medium text-slate-200">Select File</label>
             <input
               type="file"
@@ -351,7 +351,7 @@ const UploadNote: React.FC = () => {
           </div>
 
           {/* Description (Full Width) */}
-          <div className="col-span-2">
+          <div className="md:col-span-2">
             <label className="text-sm font-medium text-slate-200">Description</label>
             <textarea
               placeholder="Enter description"

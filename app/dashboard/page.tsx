@@ -321,12 +321,12 @@ export default function DashboardPage() {
         </header>
 
         {editingProfile && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4" role="presentation">
+          <div className="fixed inset-0 z-60 flex items-start justify-center overflow-y-auto bg-slate-950/80 p-4 sm:items-center" role="presentation">
             <section
               role="dialog"
               aria-modal="true"
               aria-labelledby="edit-profile-title"
-              className="my-auto w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl sm:p-8"
+              className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl sm:p-8"
             >
               <h2 id="edit-profile-title" className="text-2xl font-bold text-white">Edit profile</h2>
               <p className="mt-2 text-sm text-slate-400">Update your account and study details.</p>
@@ -572,9 +572,9 @@ export default function DashboardPage() {
                   </div>
                   {note.description && <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-300">{note.description}</p>}
                   <dl className="mt-4 space-y-2 text-sm text-slate-400">
-                    <div className="truncate">{note.fileName}</div>
-                    {note.university && <div className="truncate">{note.university}</div>}
-                    {note.course && <div className="truncate">{note.course}{note.year ? ` · ${note.year}` : ""}</div>}
+                    <div className="wrap-break-word">{note.fileName}</div>
+                    {note.university && <div className="wrap-break-word">{note.university}</div>}
+                    {note.course && <div className="wrap-break-word">{note.course}{note.year ? ` · ${note.year}` : ""}</div>}
                     {note.fileSize !== undefined && <div>{formatFileSize(note.fileSize)}</div>}
                   </dl>
                   <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-700 pt-4">
