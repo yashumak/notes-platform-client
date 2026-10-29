@@ -5,6 +5,7 @@ import axios from "axios";
 import { getRedirectDestination } from "../authRedirect";
 import { showToast } from "../components/ToastNotifications";
 import PasswordInput from "../components/PasswordInput";
+import { encryptAuthPayload } from "../auth/encryptAuthPayload";
 
 interface LoginErrors {
   email?: string;
@@ -36,7 +37,7 @@ export default function LoginPage() {
     try {
       const response = await axios.post(
         "/api/auth/login",
-        { email, password },
+        await encryptAuthPayload({ email, password }),
         { withCredentials: true }
       );
 
@@ -47,7 +48,7 @@ export default function LoginPage() {
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
         : undefined;
-      setErrors({ api: message || "Something went wrong" });
+      setErrors({ api: message || (error instanceof Error ? error.message : "Something went wrong") });
     } finally {
       setLoading(false);
     }

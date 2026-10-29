@@ -8,6 +8,7 @@ import { getRedirectDestination } from "../authRedirect";
 import { showToast } from "../components/ToastNotifications";
 import PasswordInput from "../components/PasswordInput";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { encryptAuthPayload } from "../auth/encryptAuthPayload";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -70,14 +71,14 @@ export default function SignupPage() {
     try {
       await axios.post(
         "/api/auth/register",
-        {
+        await encryptAuthPayload({
           name,
           email,
           password,
           university,
           course: branch,
           year,
-        },
+        }),
         { withCredentials: true }
       );
 
@@ -88,7 +89,7 @@ export default function SignupPage() {
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
         : undefined;
-      showToast(message || "Registration failed", "error");
+      showToast(message || (error instanceof Error ? error.message : "Registration failed"), "error");
     }
   };
 
