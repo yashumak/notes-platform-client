@@ -23,6 +23,7 @@ interface UploadedNote {
   fileUrl: string;
   university?: string;
   course?: string;
+  visibility?: "public" | "private";
   studyType?: string;
   year?: number;
   createdAt: string;
@@ -568,7 +569,9 @@ export default function DashboardPage() {
                 <article key={note._id} className="flex min-w-0 flex-col border-t-2 border-cyan-500 bg-slate-900/60 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="wrap-break-word text-lg font-semibold text-white">{note.title}</h3>
-                    <span className="shrink-0 text-xs text-cyan-200">{note.studyType || "Study material"}</span>
+                    <span className="shrink-0 text-xs text-cyan-200">
+                      {note.visibility === "private" ? "Private" : note.studyType || "Study material"}
+                    </span>
                   </div>
                   {note.description && <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-300">{note.description}</p>}
                   <dl className="mt-4 space-y-2 text-sm text-slate-400">
