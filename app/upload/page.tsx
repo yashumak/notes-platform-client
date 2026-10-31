@@ -147,9 +147,13 @@ const UploadNote: React.FC = () => {
   const [branchSearch, setBranchSearch] = useState("");
   const [showBranchList, setShowBranchList] = useState(false);
   const branchDropdownRef = useRef<HTMLDivElement>(null);
+  const [subjectSearch, setSubjectSearch] = useState("");
+  const [showSubjectList, setShowSubjectList] = useState(false);
+  const subjectDropdownRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(universityDropdownRef, () => setShowUniList(false), showUniList);
   useClickOutside(branchDropdownRef, () => setShowBranchList(false), showBranchList);
+  useClickOutside(subjectDropdownRef, () => setShowSubjectList(false), showSubjectList);
 
   const [loading, setLoading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -168,6 +172,7 @@ const UploadNote: React.FC = () => {
 
   const [universities, setUniversities] = useState<string[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -176,9 +181,11 @@ const UploadNote: React.FC = () => {
         const data = await response.json();
         setUniversities(data.colleges);
         setBranches(data.branches);
+        setSubjects(data.subjects ?? []);
       } catch {
         setUniversities([]);
         setBranches([]);
+        setSubjects([]);
       }
     };
     fetchData();
@@ -194,6 +201,7 @@ const UploadNote: React.FC = () => {
         setBranch(pendingUpload.branch);
         setBranchSearch(pendingUpload.branch);
         setSubject(pendingUpload.subject || "");
+        setSubjectSearch(pendingUpload.subject || "");
         setStudyType(pendingUpload.studyType);
         setYear(pendingUpload.year);
         setVisibility(pendingUpload.visibility || "public");
@@ -361,19 +369,29 @@ const UploadNote: React.FC = () => {
           {/* University */}
           <div>
             <label className="text-sm font-medium text-slate-200">University/College</label>
-            <div ref={universityDropdownRef}>
+            <div ref={universityDropdownRef} className="relative">
               <input
                 type="text"
                 value={uniSearch}
                 onChange={(e) => {
                   setUniSearch(e.target.value);
+                  setUniversity(e.target.value);
                   setShowUniList(true);
                 }}
                 onFocus={() => setShowUniList(true)}
-                className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 pr-10 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
                 placeholder="Search university"
               />
-
+              {uniSearch && (
+                <button
+                  type="button"
+                  onClick={() => { setUniSearch(""); setUniversity(""); setShowUniList(false); }}
+                  className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  aria-label="Clear university"
+                >
+                  ✕
+                </button>
+              )}
               {showUniList && (
                 <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
                   {universities
@@ -400,30 +418,80 @@ const UploadNote: React.FC = () => {
 
           <div>
             <label className="text-sm font-medium text-slate-200">Subject</label>
-            <input
-              type="text"
-              placeholder="Enter subject"
-              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-            />
+            <div ref={subjectDropdownRef} className="relative">
+              <input
+                type="text"
+                value={subjectSearch}
+                onChange={(e) => {
+                  setSubjectSearch(e.target.value);
+                  setSubject(e.target.value);
+                  setShowSubjectList(true);
+                }}
+                onFocus={() => setShowSubjectList(true)}
+                className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 pr-10 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                placeholder="Search or type subject"
+              />
+              {subjectSearch && (
+                <button
+                  type="button"
+                  onClick={() => { setSubjectSearch(""); setSubject(""); setShowSubjectList(false); }}
+                  className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  aria-label="Clear subject"
+                >
+                  ✕
+                </button>
+              )}
+              {showSubjectList && subjectSearch.length > 0 && (
+                <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
+                  {subjects
+                    .filter((s) =>
+                      s.toLowerCase().includes(subjectSearch.toLowerCase())
+                    )
+                    .map((s, i) => (
+                      <li
+                        key={i}
+                        className="cursor-pointer px-4 py-2 text-slate-200 transition-colors hover:bg-slate-700 hover:text-cyan-200"
+                        onClick={() => {
+                          setSubjectSearch(s);
+                          setSubject(s);
+                          setShowSubjectList(false);
+                        }}
+                      >
+                        {s}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           {/* Branch */}
-          <div ref={branchDropdownRef}>
+          <div ref={branchDropdownRef} className="relative">
             <label className="text-sm font-medium text-slate-200">Branch</label>
-            <input
-              type="text"
-              value={branchSearch}
-              onChange={(e) => {
-                setBranchSearch(e.target.value);
-                setShowBranchList(true);
-              }}
-              onFocus={() => setShowBranchList(true)}
-              className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-              placeholder="Search branch"
-            />
-
+            <div className="relative">
+              <input
+                type="text"
+                value={branchSearch}
+                onChange={(e) => {
+                  setBranchSearch(e.target.value);
+                  setBranch(e.target.value);
+                  setShowBranchList(true);
+                }}
+                onFocus={() => setShowBranchList(true)}
+                className="mt-2 w-full rounded-lg border border-slate-600 bg-slate-800 p-3 pr-10 text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                placeholder="Search branch"
+              />
+              {branchSearch && (
+                <button
+                  type="button"
+                  onClick={() => { setBranchSearch(""); setBranch(""); setShowBranchList(false); }}
+                  className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  aria-label="Clear branch"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {showBranchList && (
               <ul className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-600 bg-slate-800 shadow-xl">
                 {branches
