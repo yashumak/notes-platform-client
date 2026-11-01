@@ -151,7 +151,14 @@ function NotesContent() {
       signal: controller.signal,
     })
       .then((response) => {
-        if (!response.ok) throw new Error(`Notes request failed (HTTP ${response.status}).`);
+        if (!response.ok) {
+          return response
+            .json()
+            .catch(() => null)
+            .then((errorData: { message?: string } | null) => {
+              throw new Error(errorData?.message || `Notes request failed (HTTP ${response.status}).`);
+            });
+        }
         return readJsonWithProgress<{
           notes?: UploadedNote[];
           pagination?: { total?: number; totalPages?: number };
