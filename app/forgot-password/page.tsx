@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PasswordInput from "../components/PasswordInput";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 interface ForgotPasswordErrors {
   currentPassword?: string;
@@ -138,7 +139,7 @@ export default function ForgotPasswordPage() {
                 : "bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
             }`}
           >
-            {loading ? "Updating password..." : "Update Password"}
+            {loading ? <LoadingIndicator label="Updating password..." compact /> : "Update Password"}
           </button>
         </form>
 
