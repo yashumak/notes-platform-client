@@ -6,6 +6,7 @@ import { getRedirectDestination } from "../authRedirect";
 import { showToast } from "../components/ToastNotifications";
 import PasswordInput from "../components/PasswordInput";
 import { encryptAuthPayload } from "../auth/encryptAuthPayload";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 interface LoginErrors {
   email?: string;
@@ -124,7 +125,7 @@ export default function LoginPage() {
               }`}
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? <LoadingIndicator label="Logging in..." compact /> : "Login"}
           </button>
         </form>
 
