@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useClickOutside } from "../hooks/useClickOutside";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 interface UploadResponse {
   success: boolean;
@@ -577,7 +578,7 @@ const UploadNote: React.FC = () => {
           disabled={loading}
           className="mt-7 w-full rounded-lg bg-linear-to-r from-cyan-500 to-blue-600 py-3 font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-700"
         >
-          {loading ? "Uploading..." : "Upload study material"}
+          {loading ? <LoadingIndicator label="Uploading..." compact /> : "Upload study material"}
         </button>
       </div>
     </div>
