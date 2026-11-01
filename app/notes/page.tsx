@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useClickOutside } from "../hooks/useClickOutside";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 interface UploadedNote {
   _id: string;
@@ -36,11 +37,53 @@ const formatFileSize = (bytes: number) => {
 
 const isAllSelection = (value: string) => value.trim().toLowerCase() === "all";
 
+async function readJsonWithProgress<T>(
+  response: Response,
+  onProgress: (progress: number | undefined) => void
+): Promise<T> {
+  const totalBytes = Number(response.headers.get("content-length"));
+  if (!response.body || !Number.isFinite(totalBytes) || totalBytes <= 0) {
+    onProgress(undefined);
+    return response.json() as Promise<T>;
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let receivedBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    receivedBytes += value.length;
+    onProgress(Math.min(99, Math.floor((receivedBytes / totalBytes) * 100)));
+  }
+
+  const body = new Uint8Array(receivedBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.length;
+  }
+  onProgress(100);
+  return JSON.parse(new TextDecoder().decode(body)) as T;
+}
+
+const getPageNumbers = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index + 1);
+  if (currentPage <= 3) return [1, 2, 3, 4, "...", totalPages] as const;
+  if (currentPage >= totalPages - 2) {
+    return [1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages] as const;
+  }
+  return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages] as const;
+};
+
 function NotesContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() || "";
+  const [pageSelection, setPageSelection] = useState({ searchQuery, page: 1 });
+  const currentPage = pageSelection.searchQuery === searchQuery ? pageSelection.page : 1;
 
   const [universities, setUniversities] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
@@ -64,8 +107,12 @@ function NotesContent() {
   });
   const [filtersApplied, setFiltersApplied] = useState(false);
   const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
+  const [totalNotes, setTotalNotes] = useState(0);
+  const [legacyPagination, setLegacyPagination] = useState(false);
   const [loadingNotes, setLoadingNotes] = useState(true);
+  const [notesProgress, setNotesProgress] = useState<number>();
   const [notesError, setNotesError] = useState("");
+  const [notesRetryCount, setNotesRetryCount] = useState(0);
 
   useClickOutside(universityDropdownRef, () => setShowUniList(false), showUniList);
   useClickOutside(courseDropdownRef, () => setShowCourseList(false), showCourseList);
@@ -86,24 +133,65 @@ function NotesContent() {
 
   useEffect(() => {
     const controller = new AbortController();
+    const params = new URLSearchParams({ page: String(currentPage), limit: "30" });
+    if (searchQuery) params.set("q", searchQuery);
+    if (appliedFilters.university && !isAllSelection(appliedFilters.university)) {
+      params.set("university", appliedFilters.university);
+    }
+    if (appliedFilters.course && !isAllSelection(appliedFilters.course)) {
+      params.set("course", appliedFilters.course);
+    }
+    if (appliedFilters.subject) params.set("subject", appliedFilters.subject);
+    if (appliedFilters.studyType) params.set("studyType", appliedFilters.studyType);
+    if (appliedFilters.year) params.set("year", appliedFilters.year);
 
-    fetch("/api/notes", {
+    fetch(`/api/notes?${params.toString()}`, {
       cache: "no-store",
       credentials: "omit",
       signal: controller.signal,
     })
       .then((response) => {
-        if (!response.ok) throw new Error("Could not load uploaded notes");
-        return response.json();
+        if (!response.ok) throw new Error(`Notes request failed (HTTP ${response.status}).`);
+        return readJsonWithProgress<{
+          notes?: UploadedNote[];
+          pagination?: { total?: number; totalPages?: number };
+        } | UploadedNote[]>(response, setNotesProgress);
       })
-      .then((data) => setUploadedNotes(data.notes || []))
+      .then((data) => {
+        const notes = Array.isArray(data) ? data : data.notes;
+        const pagination = Array.isArray(data) ? undefined : data.pagination;
+        if (
+          !Array.isArray(notes) ||
+          (pagination !== undefined &&
+            (typeof pagination.total !== "number" || !Number.isFinite(pagination.total) || pagination.total < 0))
+        ) {
+          throw new Error("The notes service returned an invalid response.");
+        }
+        setUploadedNotes(notes);
+        setLegacyPagination(pagination === undefined);
+        setTotalNotes(pagination?.total ?? notes.length);
+      })
       .catch((error) => {
-        if (error.name !== "AbortError") setNotesError(error.message);
+        if (error.name !== "AbortError") {
+          setNotesError(error instanceof Error ? error.message : "The notes request failed.");
+        }
       })
-      .finally(() => setLoadingNotes(false));
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setNotesProgress(100);
+          setLoadingNotes(false);
+        }
+      });
 
     return () => controller.abort();
-  }, []);
+  }, [appliedFilters, currentPage, notesRetryCount, searchQuery]);
+
+  const retryNotes = () => {
+    setNotesError("");
+    setLoadingNotes(true);
+    setNotesProgress(undefined);
+    setNotesRetryCount((count) => count + 1);
+  };
 
   // Filter logic
   const filteredUniversities = universities.filter((u) =>
@@ -149,7 +237,20 @@ function NotesContent() {
       (!appliedFilters.year || String(note.year || "") === appliedFilters.year)
     );
   });
-  const displayedNotes = filteredNotes.length > 0 ? filteredNotes : uploadedNotes;
+  const displayedNotes = filteredNotes;
+  const notesPerPage = 30;
+  const displayedTotal = legacyPagination ? displayedNotes.length : totalNotes;
+  const totalPages = Math.ceil(displayedTotal / notesPerPage);
+  const visibleNotes = legacyPagination
+    ? displayedNotes.slice((currentPage - 1) * notesPerPage, currentPage * notesPerPage)
+    : displayedNotes;
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+      Object.entries(appliedFilters).some(
+        ([key, value]) => value && !(key === "university" || key === "course" ? isAllSelection(value) : false)
+      )
+  );
 
   const applyFilters = () => {
     setAppliedFilters({
@@ -160,6 +261,9 @@ function NotesContent() {
       year: yearFilter,
     });
     setFiltersApplied(true);
+    setLoadingNotes(true);
+    setNotesProgress(undefined);
+    setPageSelection({ searchQuery, page: 1 });
     setShowUniList(false);
     setShowCourseList(false);
   };
@@ -172,8 +276,23 @@ function NotesContent() {
     setYearFilter("");
     setAppliedFilters({ university: "", course: "", subject: "", studyType: "", year: "" });
     setFiltersApplied(false);
+    setLoadingNotes(true);
+    setNotesProgress(undefined);
+    setPageSelection({ searchQuery, page: 1 });
     setShowUniList(false);
     setShowCourseList(false);
+  };
+
+  const goToPage = (page: number) => {
+    setLoadingNotes(true);
+    setNotesProgress(undefined);
+    setPageSelection({ searchQuery, page });
+    requestAnimationFrame(() => {
+      document.getElementById("notes-results")?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+        block: "start",
+      });
+    });
   };
 
 
@@ -359,7 +478,7 @@ function NotesContent() {
       <main className="min-w-0 flex-1 p-4 sm:p-6">
         <h1 className="text-3xl font-bold text-white mb-6">Notes & Study Materials</h1>
 
-        <section>
+        <section id="notes-results" className="scroll-mt-24">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
             <div>
               {searchQuery && (
@@ -377,23 +496,42 @@ function NotesContent() {
                 </div>
               )}
             </div>
-            <p className="text-sm text-slate-400">{displayedNotes.length} {displayedNotes.length === 1 ? "note" : "notes"}</p>
+            <p className="text-sm text-slate-400">
+              {!loadingNotes && `${displayedTotal} ${displayedTotal === 1 ? "note" : "notes"}`}
+            </p>
           </div>
 
-          {loadingNotes && <p className="text-slate-300">Loading uploaded notes...</p>}
-          {!loadingNotes && notesError && <p className="text-rose-300">{notesError}</p>}
-          {!loadingNotes && !notesError && filteredNotes.length === 0 && (
+          {loadingNotes && (
+            <LoadingIndicator
+              label="Loading your study notes"
+              progress={notesProgress}
+              className="min-h-48 rounded-xl border border-slate-700 bg-slate-900/50"
+            />
+          )}
+          {!loadingNotes && notesError && (
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-rose-400/30 bg-rose-400/10 p-4">
+              <p className="text-sm text-rose-200" role="alert">
+                We couldn’t load your notes. {notesError}
+              </p>
+              <button
+                type="button"
+                onClick={retryNotes}
+                className="rounded-lg border border-rose-300/50 px-4 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-300/10 focus:outline-none focus:ring-2 focus:ring-rose-300"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+          {!loadingNotes && !notesError && displayedTotal === 0 && (
             <p className="mb-4 rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
-              {uploadedNotes.length
-                ? searchQuery
-                  ? `No relevant uploaded notes found for "${searchQuery}". Try another keyword or browse all notes.`
-                  : "No notes match these filters. Showing all uploaded notes below."
+              {hasActiveFilters
+                ? "No notes match your search and filters. Try changing or clearing them."
                 : "No notes have been uploaded yet."}
             </p>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {displayedNotes.map((note) => (
+          {!loadingNotes && !notesError && <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {visibleNotes.map((note) => (
               <article key={note._id} className="flex min-w-0 flex-col rounded-lg border border-slate-700 bg-slate-800/80 p-5 shadow-lg transition-colors hover:border-cyan-500/70">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <span className="truncate rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
@@ -443,7 +581,49 @@ function NotesContent() {
                 </div>
               </article>
             ))}
-          </div>
+          </div>}
+          {!loadingNotes && !notesError && totalPages > 1 && (
+            <nav aria-label="Notes pages" className="mt-8 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="rounded-lg border border-slate-600 px-3 py-2 text-sm text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              {pageNumbers.map((page, index) =>
+                typeof page === "number" ? (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => goToPage(page)}
+                    aria-current={currentPage === page ? "page" : undefined}
+                    aria-label={`Page ${page}`}
+                    className={`min-w-10 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                      currentPage === page
+                        ? "border-cyan-400 bg-cyan-400/15 font-semibold text-cyan-200"
+                        : "border-slate-600 text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ) : (
+                  <span key={`ellipsis-${index}`} className="px-1 text-slate-400" aria-hidden="true">
+                    …
+                  </span>
+                )
+              )}
+              <button
+                type="button"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="rounded-lg border border-slate-600 px-3 py-2 text-sm text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </nav>
+          )}
         </section>
       </main>
     </div>
@@ -452,7 +632,7 @@ function NotesContent() {
 
 export default function NotesPage() {
   return (
-    <Suspense fallback={<main className="p-6 text-slate-300">Loading notes...</main>}>
+    <Suspense fallback={<LoadingIndicator label="Opening notes" className="min-h-64" />}>
       <NotesContent />
     </Suspense>
   );
