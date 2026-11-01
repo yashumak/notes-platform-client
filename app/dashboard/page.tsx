@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useClickOutside } from "../hooks/useClickOutside";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 interface AccountProfile {
   name: string;
@@ -41,8 +42,11 @@ export default function DashboardPage() {
   const [branches, setBranches] = useState<string[]>([]);
   const [profileOptionsError, setProfileOptionsError] = useState("");
   const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notesError, setNotesError] = useState("");
+  const [notesRetryCount, setNotesRetryCount] = useState(0);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: "",
@@ -94,36 +98,54 @@ export default function DashboardPage() {
   useEffect(() => {
     const controller = new AbortController();
 
+    const loadUploadedNotes = async () => {
+      try {
+        const notesResponse = await fetch("/api/notes/mine", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (!notesResponse.ok) {
+          throw new Error(`Could not load your uploads (HTTP ${notesResponse.status}).`);
+        }
+        const notesData: { notes?: UploadedNote[] } = await notesResponse.json();
+        if (!Array.isArray(notesData.notes)) {
+          throw new Error("The uploads service returned an invalid response.");
+        }
+        setUploadedNotes(notesData.notes);
+      } catch (notesLoadError) {
+        if (!controller.signal.aborted) {
+          setNotesError(notesLoadError instanceof Error ? notesLoadError.message : "The uploads request failed.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoadingNotes(false);
+      }
+    };
+
     const loadDashboard = async () => {
       try {
         const requestOptions = {
           credentials: "include" as RequestCredentials,
           signal: controller.signal,
         };
-        const [profileResponse, notesResponse] = await Promise.all([
-          fetch("/api/auth/verify", requestOptions),
-          fetch("/api/notes/mine", requestOptions),
-        ]);
+        const profileResponse = await fetch("/api/auth/verify", requestOptions);
 
-        if (profileResponse.status === 401 || notesResponse.status === 401) {
+        if (profileResponse.status === 401) {
           router.replace("/login");
           return;
         }
-        if (!profileResponse.ok || !notesResponse.ok) {
-          throw new Error("Could not load your dashboard. Please try again.");
+        if (!profileResponse.ok) {
+          throw new Error(`Could not load your account (HTTP ${profileResponse.status}). Please try again.`);
         }
 
-        const [profileData, notesData] = await Promise.all([
-          profileResponse.json(),
-          notesResponse.json(),
-        ]);
+        const profileData: { isAuthenticated?: boolean; user?: AccountProfile } = await profileResponse.json();
         if (!profileData.isAuthenticated || !profileData.user) {
           router.replace("/login");
           return;
         }
 
         setProfile(profileData.user);
-        setUploadedNotes(notesData.notes || []);
+        setLoading(false);
+        void loadUploadedNotes();
       } catch (loadError) {
         if (!controller.signal.aborted) {
           setError(loadError instanceof Error ? loadError.message : "Could not load your dashboard.");
@@ -135,7 +157,13 @@ export default function DashboardPage() {
 
     loadDashboard();
     return () => controller.abort();
-  }, [router]);
+  }, [router, notesRetryCount]);
+
+  const retryUploadedNotes = () => {
+    setNotesError("");
+    setLoadingNotes(true);
+    setNotesRetryCount((count) => count + 1);
+  };
 
   const openProfileEditor = () => {
     const university = profile?.university ?? "";
@@ -253,13 +281,24 @@ export default function DashboardPage() {
   );
 
   if (loading) {
-    return <main className="min-h-screen px-6 pb-16 pt-28 text-slate-300">Loading your dashboard...</main>;
+    return (
+      <main className="flex min-h-screen items-center justify-center px-6 pb-16 pt-28">
+        <LoadingIndicator label="Loading your dashboard" className="min-h-64" />
+      </main>
+    );
   }
 
   if (error) {
     return (
-      <main className="min-h-screen px-6 pb-16 pt-28 text-rose-200" role="alert">
-        {error}
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 pb-16 pt-28 text-rose-200">
+        <p role="alert">{error}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded-lg border border-rose-300/50 px-4 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-300/10 focus:outline-none focus:ring-2 focus:ring-rose-300"
+        >
+          Try again
+        </button>
       </main>
     );
   }
@@ -560,10 +599,30 @@ export default function DashboardPage() {
           </div>
 
           {deleteError && <p className="mb-4 text-sm text-rose-300" role="alert">{deleteError}</p>}
+          {notesError && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-rose-400/30 bg-rose-400/10 p-4">
+              <p className="text-sm text-rose-200" role="alert">
+                We couldn’t load your uploads. {notesError}
+              </p>
+              <button
+                type="button"
+                onClick={retryUploadedNotes}
+                className="rounded-lg border border-rose-300/50 px-4 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-300/10 focus:outline-none focus:ring-2 focus:ring-rose-300"
+              >
+                Try again
+              </button>
+            </div>
+          )}
 
-          {uploadedNotes.length === 0 ? (
+          {loadingNotes && (
+            <LoadingIndicator
+              label="Loading your uploads"
+              className="min-h-40 rounded-xl border border-slate-700 bg-slate-900/50"
+            />
+          )}
+          {!loadingNotes && !notesError && uploadedNotes.length === 0 ? (
             <p className="border-t border-slate-700 py-6 text-slate-400">You haven’t uploaded any materials yet.</p>
-          ) : (
+          ) : !loadingNotes && !notesError && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {uploadedNotes.map((note) => (
                 <article key={note._id} className="flex min-w-0 flex-col border-t-2 border-cyan-500 bg-slate-900/60 p-5">
