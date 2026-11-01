@@ -33,3 +33,35 @@ canvas {
     transform: translate3d(1rem, -0.25rem, 0) scale(0.98);
   }
 }
+
+.loading-note {
+  animation: loading-note-float 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.loading-orbit {
+  animation: loading-orbit-spin 4s linear infinite;
+}
+
+@keyframes loading-note-float {
+  0%,
+  100% {
+    transform: translateY(3px) rotate(5deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-6deg);
+  }
+}
+
+@keyframes loading-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-note,
+  .loading-orbit {
+    animation: none;
+  }
+}
