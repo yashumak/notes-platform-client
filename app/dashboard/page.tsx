@@ -3,32 +3,22 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClickOutside } from "../hooks/useClickOutside";
 import LoadingIndicator from "../components/LoadingIndicator";
+import {
+  fetchMyNotes,
+  fetchSessionIdentity,
+  noteKeys,
+  sessionIdentityKey,
+  type AuthenticatedSession,
+  type CachedSession,
+  type Note,
+} from "../notes/queries";
 
-interface AccountProfile {
-  name: string;
-  email: string;
-  university?: string;
-  course?: string;
-  year?: string;
-  profilePhotoUrl?: string | null;
-}
+type AccountProfile = AuthenticatedSession["user"];
 
-interface UploadedNote {
-  _id: string;
-  title: string;
-  description?: string;
-  fileName: string;
-  fileSize?: number;
-  fileUrl: string;
-  university?: string;
-  course?: string;
-  visibility?: "public" | "private";
-  studyType?: string;
-  year?: number;
-  createdAt: string;
-}
+type UploadedNote = Note;
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -37,16 +27,17 @@ const formatFileSize = (bytes: number) => {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<AccountProfile | null>(null);
+  const queryClient = useQueryClient();
+  const sessionQuery = useQuery({
+    queryKey: sessionIdentityKey,
+    queryFn: ({ signal }) => fetchSessionIdentity(signal),
+    staleTime: 30_000,
+  });
+  const session = sessionQuery.data;
+  const profile = session?.status === "authenticated" ? session.user : null;
   const [colleges, setColleges] = useState<string[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
   const [profileOptionsError, setProfileOptionsError] = useState("");
-  const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
-  const [loadingNotes, setLoadingNotes] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [notesError, setNotesError] = useState("");
-  const [notesRetryCount, setNotesRetryCount] = useState(0);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: "",
@@ -68,6 +59,21 @@ export default function DashboardPage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const notesQuery = useQuery({
+    queryKey: noteKeys.mine(profile?.id ?? ""),
+    queryFn: ({ signal }) => {
+      if (!profile?.id) throw new Error("A verified user is required to load private notes.");
+      return fetchMyNotes(profile.id, signal);
+    },
+    enabled: session?.status === "authenticated" && !sessionQuery.isFetching,
+  });
+  const uploadedNotes =
+    session?.status === "authenticated" && !sessionQuery.isFetching
+      ? notesQuery.data ?? []
+      : [];
+  const loadingNotes =
+    session?.status === "authenticated" &&
+    (sessionQuery.isFetching || notesQuery.isPending);
 
   useClickOutside(collegeDropdownRef, () => setShowCollegeList(false), showCollegeList);
   useClickOutside(branchDropdownRef, () => setShowBranchList(false), showBranchList);
@@ -96,73 +102,11 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    const loadUploadedNotes = async () => {
-      try {
-        const notesResponse = await fetch("/api/notes/mine", {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        if (!notesResponse.ok) {
-          throw new Error(`Could not load your uploads (HTTP ${notesResponse.status}).`);
-        }
-        const notesData: { notes?: UploadedNote[] } = await notesResponse.json();
-        if (!Array.isArray(notesData.notes)) {
-          throw new Error("The uploads service returned an invalid response.");
-        }
-        setUploadedNotes(notesData.notes);
-      } catch (notesLoadError) {
-        if (!controller.signal.aborted) {
-          setNotesError(notesLoadError instanceof Error ? notesLoadError.message : "The uploads request failed.");
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoadingNotes(false);
-      }
-    };
-
-    const loadDashboard = async () => {
-      try {
-        const requestOptions = {
-          credentials: "include" as RequestCredentials,
-          signal: controller.signal,
-        };
-        const profileResponse = await fetch("/api/auth/verify", requestOptions);
-
-        if (profileResponse.status === 401) {
-          router.replace("/login");
-          return;
-        }
-        if (!profileResponse.ok) {
-          throw new Error(`Could not load your account (HTTP ${profileResponse.status}). Please try again.`);
-        }
-
-        const profileData: { isAuthenticated?: boolean; user?: AccountProfile } = await profileResponse.json();
-        if (!profileData.isAuthenticated || !profileData.user) {
-          router.replace("/login");
-          return;
-        }
-
-        setProfile(profileData.user);
-        setLoading(false);
-        void loadUploadedNotes();
-      } catch (loadError) {
-        if (!controller.signal.aborted) {
-          setError(loadError instanceof Error ? loadError.message : "Could not load your dashboard.");
-        }
-      }  finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    };
-
-    loadDashboard();
-    return () => controller.abort();
-  }, [router, notesRetryCount]);
+    if (session?.status === "anonymous") router.replace("/login");
+  }, [router, session?.status]);
 
   const retryUploadedNotes = () => {
-    setNotesError("");
-    setLoadingNotes(true);
-    setNotesRetryCount((count) => count + 1);
+    void notesQuery.refetch();
   };
 
   const openProfileEditor = () => {
@@ -201,13 +145,25 @@ export default function DashboardPage() {
         body: formData,
         credentials: "include",
       });
-      const data: { message?: string; errors?: { msg?: string }[]; user?: AccountProfile } = await response.json();
+      const data: {
+        message?: string;
+        errors?: { msg?: string }[];
+        user?: Omit<AccountProfile, "id">;
+      } = await response.json();
       if (!response.ok) {
         throw new Error(data.message || data.errors?.[0]?.msg || "Could not update your profile");
       }
       if (!data.user) throw new Error("The server did not return your updated profile");
+      const updatedProfile = data.user;
 
-      setProfile(data.user);
+      queryClient.setQueryData<CachedSession>(sessionIdentityKey, (currentSession) =>
+        currentSession?.status === "authenticated" && currentSession.accountKey === profile?.id
+          ? {
+              ...currentSession,
+              user: { ...updatedProfile, id: currentSession.accountKey },
+            }
+          : currentSession
+      );
       setEditingProfile(false);
       window.dispatchEvent(new Event("profile-photo-updated"));
     } catch (uploadError) {
@@ -254,6 +210,7 @@ export default function DashboardPage() {
         : null;
 
       if (response.status === 401) {
+        window.dispatchEvent(new Event("auth-state-updated"));
         router.replace("/");
         return;
       }
@@ -264,7 +221,12 @@ export default function DashboardPage() {
         throw new Error(data?.message || "Could not delete note. Please try again.");
       }
 
-      setUploadedNotes((currentNotes) => currentNotes.filter((item) => item._id !== note._id));
+      if (profile?.id) {
+        queryClient.setQueryData<UploadedNote[]>(noteKeys.mine(profile.id), (currentNotes) =>
+          currentNotes?.filter((item) => item._id !== note._id) ?? []
+        );
+      }
+      void queryClient.invalidateQueries({ queryKey: noteKeys.publicRoot });
     } catch (deleteFailure) {
       setDeleteError(deleteFailure instanceof Error ? deleteFailure.message : "Could not delete note. Please try again.");
     } finally {
@@ -280,7 +242,7 @@ export default function DashboardPage() {
     branch.toLowerCase().includes(branchSearch.toLowerCase())
   );
 
-  if (loading) {
+  if (sessionQuery.isPending || session?.status === "checking") {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 pb-16 pt-28">
         <LoadingIndicator label="Loading your dashboard" className="min-h-64" />
@@ -288,10 +250,10 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
+  if (sessionQuery.isError) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 pb-16 pt-28 text-rose-200">
-        <p role="alert">{error}</p>
+        <p role="alert">{sessionQuery.error.message}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
@@ -299,6 +261,14 @@ export default function DashboardPage() {
         >
           Try again
         </button>
+      </main>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-6 pb-16 pt-28">
+        <LoadingIndicator label="Opening your dashboard" className="min-h-64" />
       </main>
     );
   }
@@ -599,10 +569,10 @@ export default function DashboardPage() {
           </div>
 
           {deleteError && <p className="mb-4 text-sm text-rose-300" role="alert">{deleteError}</p>}
-          {notesError && (
+          {notesQuery.isError && (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-rose-400/30 bg-rose-400/10 p-4">
               <p className="text-sm text-rose-200" role="alert">
-                We couldn’t load your uploads. {notesError}
+                We couldn’t load your uploads. {notesQuery.error.message}
               </p>
               <button
                 type="button"
@@ -620,9 +590,9 @@ export default function DashboardPage() {
               className="min-h-40 rounded-xl border border-slate-700 bg-slate-900/50"
             />
           )}
-          {!loadingNotes && !notesError && uploadedNotes.length === 0 ? (
+          {!loadingNotes && !notesQuery.isError && uploadedNotes.length === 0 ? (
             <p className="border-t border-slate-700 py-6 text-slate-400">You haven’t uploaded any materials yet.</p>
-          ) : !loadingNotes && !notesError && (
+          ) : !loadingNotes && !notesQuery.isError && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {uploadedNotes.map((note) => (
                 <article key={note._id} className="flex min-w-0 flex-col border-t-2 border-cyan-500 bg-slate-900/60 p-5">
