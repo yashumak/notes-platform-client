@@ -1,26 +1,19 @@
 'use client';
 
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClickOutside } from "../hooks/useClickOutside";
 import LoadingIndicator from "../components/LoadingIndicator";
-
-interface UploadedNote {
-  _id: string;
-  title: string;
-  description?: string;
-  fileName: string;
-  fileSize?: number;
-  fileUrl?: string;
-  university?: string;
-  subject?: string;
-  branch?: string;
-  course?: string;
-  studyType?: string;
-  year?: number;
-  tags?: string[];
-  createdAt: string;
-}
+import {
+  fetchPublicNotes,
+  fetchSessionIdentity,
+  noteKeys,
+  notesPageSize,
+  sessionIdentityKey,
+  type Note,
+  type NoteQueryParams,
+} from "./queries";
 
 interface NoteFilters {
   university: string;
@@ -37,37 +30,6 @@ const formatFileSize = (bytes: number) => {
 
 const isAllSelection = (value: string) => value.trim().toLowerCase() === "all";
 
-async function readJsonWithProgress<T>(
-  response: Response,
-  onProgress: (progress: number | undefined) => void
-): Promise<T> {
-  const totalBytes = Number(response.headers.get("content-length"));
-  if (!response.body || !Number.isFinite(totalBytes) || totalBytes <= 0) {
-    onProgress(undefined);
-    return response.json() as Promise<T>;
-  }
-
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let receivedBytes = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    receivedBytes += value.length;
-    onProgress(Math.min(99, Math.floor((receivedBytes / totalBytes) * 100)));
-  }
-
-  const body = new Uint8Array(receivedBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.length;
-  }
-  onProgress(100);
-  return JSON.parse(new TextDecoder().decode(body)) as T;
-}
-
 const getPageNumbers = (currentPage: number, totalPages: number) => {
   if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index + 1);
   if (currentPage <= 3) return [1, 2, 3, 4, "...", totalPages] as const;
@@ -77,13 +39,28 @@ const getPageNumbers = (currentPage: number, totalPages: number) => {
   return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages] as const;
 };
 
-function NotesContent() {
+const sameNoteFilters = (first: NoteQueryParams, second: NoteQueryParams) =>
+  first.limit === second.limit &&
+  first.q === second.q &&
+  first.university === second.university &&
+  first.course === second.course &&
+  first.subject === second.subject &&
+  first.studyType === second.studyType &&
+  first.year === second.year &&
+  first.sort === second.sort;
 
+function NotesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const searchQuery = searchParams.get("q")?.trim() || "";
   const [pageSelection, setPageSelection] = useState({ searchQuery, page: 1 });
   const currentPage = pageSelection.searchQuery === searchQuery ? pageSelection.page : 1;
+  const sessionQuery = useQuery({
+    queryKey: sessionIdentityKey,
+    queryFn: ({ signal }) => fetchSessionIdentity(signal),
+    staleTime: 30_000,
+  });
 
   const [universities, setUniversities] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
@@ -106,13 +83,60 @@ function NotesContent() {
     year: "",
   });
   const [filtersApplied, setFiltersApplied] = useState(false);
-  const [uploadedNotes, setUploadedNotes] = useState<UploadedNote[]>([]);
-  const [totalNotes, setTotalNotes] = useState(0);
-  const [legacyPagination, setLegacyPagination] = useState(false);
-  const [loadingNotes, setLoadingNotes] = useState(true);
-  const [notesProgress, setNotesProgress] = useState<number>();
-  const [notesError, setNotesError] = useState("");
-  const [notesRetryCount, setNotesRetryCount] = useState(0);
+  const [notesProgressState, setNotesProgressState] = useState<{
+    key: string;
+    value: number | undefined;
+  }>();
+  const accountKey =
+    sessionQuery.data?.status === "authenticated"
+      ? sessionQuery.data.accountKey
+      : "anonymous";
+  const noteParams = useMemo<NoteQueryParams>(() => ({
+    page: currentPage,
+    limit: notesPageSize,
+    q: searchQuery,
+    university: appliedFilters.university && !isAllSelection(appliedFilters.university)
+      ? appliedFilters.university
+      : "",
+    course: appliedFilters.course && !isAllSelection(appliedFilters.course)
+      ? appliedFilters.course
+      : "",
+    subject: appliedFilters.subject,
+    studyType: appliedFilters.studyType,
+    year: appliedFilters.year,
+    sort: "createdAt:desc",
+  }), [appliedFilters, currentPage, searchQuery]);
+  const noteParamsKey = JSON.stringify(noteParams);
+  const notesProgress = notesProgressState?.key === noteParamsKey
+    ? notesProgressState.value
+    : undefined;
+  const notesQuery = useQuery({
+    queryKey: noteKeys.public(accountKey, noteParams),
+    queryFn: ({ signal }) => fetchPublicNotes(
+      noteParams,
+      signal,
+      (value) => setNotesProgressState({ key: noteParamsKey, value })
+    ),
+    enabled: sessionQuery.data?.status !== "checking" && sessionQuery.isSuccess && !sessionQuery.isFetching,
+    placeholderData: (previousData, previousQuery) => {
+      const previousParams = previousQuery?.queryKey[3] as NoteQueryParams | undefined;
+      if (
+        previousQuery?.queryKey[0] !== "notes" ||
+        previousQuery.queryKey[1] !== "public" ||
+        previousQuery.queryKey[2] !== accountKey ||
+        !previousParams
+      ) {
+        return undefined;
+      }
+
+      return sameNoteFilters(previousParams, noteParams) ? previousData : undefined;
+    },
+  });
+  const uploadedNotes = notesQuery.data?.notes ?? [];
+  const legacyPagination = notesQuery.data?.legacyPagination ?? false;
+  const totalNotes = notesQuery.data?.total ?? 0;
+  const loadingNotes = sessionQuery.isPending || (sessionQuery.isSuccess && notesQuery.isPending);
+  const notesError = sessionQuery.error ?? notesQuery.error;
 
   useClickOutside(universityDropdownRef, () => setShowUniList(false), showUniList);
   useClickOutside(courseDropdownRef, () => setShowCourseList(false), showCourseList);
@@ -132,72 +156,38 @@ function NotesContent() {
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({ page: String(currentPage), limit: "30" });
-    if (searchQuery) params.set("q", searchQuery);
-    if (appliedFilters.university && !isAllSelection(appliedFilters.university)) {
-      params.set("university", appliedFilters.university);
+    const pageData = notesQuery.data;
+    if (
+      !sessionQuery.isSuccess ||
+      !pageData ||
+      notesQuery.isPlaceholderData ||
+      currentPage >= pageData.totalPages
+    ) {
+      return;
     }
-    if (appliedFilters.course && !isAllSelection(appliedFilters.course)) {
-      params.set("course", appliedFilters.course);
-    }
-    if (appliedFilters.subject) params.set("subject", appliedFilters.subject);
-    if (appliedFilters.studyType) params.set("studyType", appliedFilters.studyType);
-    if (appliedFilters.year) params.set("year", appliedFilters.year);
 
-    fetch(`/api/notes?${params.toString()}`, {
-      cache: "no-store",
-      credentials: "omit",
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response
-            .json()
-            .catch(() => null)
-            .then((errorData: { message?: string } | null) => {
-              throw new Error(errorData?.message || `Notes request failed (HTTP ${response.status}).`);
-            });
-        }
-        return readJsonWithProgress<{
-          notes?: UploadedNote[];
-          pagination?: { total?: number; totalPages?: number };
-        } | UploadedNote[]>(response, setNotesProgress);
-      })
-      .then((data) => {
-        const notes = Array.isArray(data) ? data : data.notes;
-        const pagination = Array.isArray(data) ? undefined : data.pagination;
-        if (
-          !Array.isArray(notes) ||
-          (pagination !== undefined &&
-            (typeof pagination.total !== "number" || !Number.isFinite(pagination.total) || pagination.total < 0))
-        ) {
-          throw new Error("The notes service returned an invalid response.");
-        }
-        setUploadedNotes(notes);
-        setLegacyPagination(pagination === undefined);
-        setTotalNotes(pagination?.total ?? notes.length);
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setNotesError(error instanceof Error ? error.message : "The notes request failed.");
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setNotesProgress(100);
-          setLoadingNotes(false);
-        }
-      });
-
-    return () => controller.abort();
-  }, [appliedFilters, currentPage, notesRetryCount, searchQuery]);
+    const nextPageParams = { ...noteParams, page: currentPage + 1 };
+    void queryClient.prefetchQuery({
+      queryKey: noteKeys.public(accountKey, nextPageParams),
+      queryFn: ({ signal }) => fetchPublicNotes(nextPageParams, signal),
+    });
+  }, [
+    currentPage,
+    noteParams,
+    notesQuery.data,
+    notesQuery.isPlaceholderData,
+    queryClient,
+    sessionQuery.isSuccess,
+    accountKey,
+  ]);
 
   const retryNotes = () => {
-    setNotesError("");
-    setLoadingNotes(true);
-    setNotesProgress(undefined);
-    setNotesRetryCount((count) => count + 1);
+    setNotesProgressState({ key: noteParamsKey, value: undefined });
+    if (sessionQuery.isError) {
+      void sessionQuery.refetch();
+    } else {
+      void notesQuery.refetch();
+    }
   };
 
   // Filter logic
@@ -211,7 +201,7 @@ function NotesContent() {
 
   const searchTerms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
   const subjectTerms = appliedFilters.subject.toLowerCase().split(/\s+/).filter(Boolean);
-  const getNoteSearchText = (note: UploadedNote) =>
+  const getNoteSearchText = (note: Note) =>
     [
       note.title,
       note.description,
@@ -245,7 +235,7 @@ function NotesContent() {
     );
   });
   const displayedNotes = filteredNotes;
-  const notesPerPage = 30;
+  const notesPerPage = notesPageSize;
   const displayedTotal = legacyPagination ? displayedNotes.length : totalNotes;
   const totalPages = Math.ceil(displayedTotal / notesPerPage);
   const visibleNotes = legacyPagination
@@ -268,8 +258,6 @@ function NotesContent() {
       year: yearFilter,
     });
     setFiltersApplied(true);
-    setLoadingNotes(true);
-    setNotesProgress(undefined);
     setPageSelection({ searchQuery, page: 1 });
     setShowUniList(false);
     setShowCourseList(false);
@@ -283,16 +271,13 @@ function NotesContent() {
     setYearFilter("");
     setAppliedFilters({ university: "", course: "", subject: "", studyType: "", year: "" });
     setFiltersApplied(false);
-    setLoadingNotes(true);
-    setNotesProgress(undefined);
     setPageSelection({ searchQuery, page: 1 });
     setShowUniList(false);
     setShowCourseList(false);
   };
 
   const goToPage = (page: number) => {
-    setLoadingNotes(true);
-    setNotesProgress(undefined);
+    if (page < 1) return;
     setPageSelection({ searchQuery, page });
     requestAnimationFrame(() => {
       document.getElementById("notes-results")?.scrollIntoView({
@@ -518,7 +503,7 @@ function NotesContent() {
           {!loadingNotes && notesError && (
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-rose-400/30 bg-rose-400/10 p-4">
               <p className="text-sm text-rose-200" role="alert">
-                We couldn’t load your notes. {notesError}
+                We couldn’t load your notes. {notesError.message}
               </p>
               <button
                 type="button"
@@ -528,6 +513,11 @@ function NotesContent() {
                 Try again
               </button>
             </div>
+          )}
+          {notesQuery.isFetching && !loadingNotes && !notesError && (
+            <p className="mb-3 text-sm text-cyan-200" role="status">
+              Loading page {currentPage}; showing the previously loaded notes.
+            </p>
           )}
           {!loadingNotes && !notesError && displayedTotal === 0 && (
             <p className="mb-4 rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-slate-300">
