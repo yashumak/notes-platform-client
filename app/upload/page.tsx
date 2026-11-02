@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClickOutside } from "../hooks/useClickOutside";
 import LoadingIndicator from "../components/LoadingIndicator";
+import { invalidateNotes } from "../notes/queries";
 
 interface UploadResponse {
   success: boolean;
@@ -131,6 +133,7 @@ async function clearPendingUpload(): Promise<void> {
 
 const UploadNote: React.FC = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -278,6 +281,7 @@ const UploadNote: React.FC = () => {
       setUploadProgress(95);
 
       await completeNoteUpload(upload.uploadToken);
+      await invalidateNotes(queryClient);
 
       await clearPendingUpload();
       setUploadProgress(100);
