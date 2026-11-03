@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [university, setUniversity] = useState("");
   const [branch, setBranch] = useState("");
   const [year, setYear] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
   const [uniSearch, setUniSearch] = useState("");
   const [showUniList, setShowUniList] = useState(false);
@@ -59,9 +60,40 @@ export default function SignupPage() {
     if (!university.trim()) newErrors.university = "University is required.";
     if (!branch.trim()) newErrors.branch = "Branch is required.";
     if (!year.trim()) newErrors.year = "Year is required.";
+    if (profilePhoto && profilePhoto.size > 5 * 1024 * 1024) {
+      newErrors.profilePhoto = "Profile photo must be 5 MB or smaller.";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleProfilePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setProfilePhoto(null);
+      event.target.value = "";
+      setErrors((current) => ({
+        ...current,
+        profilePhoto: "Choose a JPEG, PNG, or WebP image.",
+      }));
+      return;
+    }
+    if (file && file.size > 5 * 1024 * 1024) {
+      setProfilePhoto(null);
+      event.target.value = "";
+      setErrors((current) => ({
+        ...current,
+        profilePhoto: "Profile photo must be 5 MB or smaller.",
+      }));
+      return;
+    }
+    setProfilePhoto(file);
+    setErrors((current) => {
+      const next = { ...current };
+      delete next.profilePhoto;
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +114,27 @@ export default function SignupPage() {
         { withCredentials: true }
       );
 
-      showToast("Registration successful!");
+      let photoUploadError: string | undefined;
+      if (profilePhoto) {
+        const formData = new FormData();
+        formData.append("photo", profilePhoto);
+        try {
+          await axios.put("/api/auth/profile/photo", formData, { withCredentials: true });
+        } catch (error: unknown) {
+          photoUploadError = axios.isAxiosError<{ message?: string }>(error)
+            ? error.response?.data?.message
+            : undefined;
+        }
+      }
+
+      showToast(
+        photoUploadError
+          ? `Account created, but the profile photo could not be uploaded. ${photoUploadError}`
+          : profilePhoto
+            ? "Registration successful! Profile photo uploaded."
+            : "Registration successful!",
+        photoUploadError ? "error" : "success"
+      );
       window.dispatchEvent(new Event("auth-state-updated"));
       router.replace(getRedirectDestination("/dashboard"));
     } catch (error: unknown) {
@@ -163,6 +215,29 @@ export default function SignupPage() {
 
             {errors.year && (
               <p className="mt-2 text-sm text-rose-300">{errors.year}</p>
+            )}
+          </div>
+
+          {/* Profile Photo */}
+          <div className="col-span-1 md:col-span-2">
+            <label htmlFor="profile-photo" className="font-medium text-slate-200">
+              Profile photo <span className="text-slate-400">(optional)</span>
+            </label>
+            <input
+              id="profile-photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleProfilePhotoChange}
+              aria-describedby="profile-photo-help"
+              aria-invalid={Boolean(errors.profilePhoto)}
+              className="mt-2 block w-full rounded-lg border border-slate-600 bg-slate-800 p-3 text-slate-100 file:mr-4 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-slate-100 hover:file:bg-slate-600"
+            />
+            <p id="profile-photo-help" className="mt-2 text-sm text-slate-400">
+              JPEG, PNG, or WebP, up to 5 MB.
+              {profilePhoto ? ` Selected: ${profilePhoto.name}` : ""}
+            </p>
+            {errors.profilePhoto && (
+              <p className="mt-2 text-sm text-rose-300">{errors.profilePhoto}</p>
             )}
           </div>
 
