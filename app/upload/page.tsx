@@ -35,29 +35,45 @@ function uploadFileToS3(
   uploadUrl: string,
   file: File,
   headers: Record<string, string>,
-  onProgress: (progress: number) => void
+  onProgress: (progress: number | null) => void
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("PUT", uploadUrl);
-    request.timeout = 30 * 60 * 1000;
-    Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 90));
+    const sendAttempt = (attempt: number) => {
+      const request = new XMLHttpRequest();
+      request.open("PUT", uploadUrl);
+      request.timeout = 30 * 60 * 1000;
+      Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 90));
+      };
+      request.onload = () => {
+        if (request.status >= 200 && request.status < 300) {
+          onProgress(90);
+          resolve();
+        } else if (request.status === 403) {
+          reject(new Error("The secure upload link expired or storage rejected the request. Please try again."));
+        } else if ((request.status === 408 || request.status === 429 || request.status >= 500) && attempt === 0) {
+          onProgress(null);
+          window.setTimeout(() => sendAttempt(1), 500);
+        } else {
+          reject(new Error(`Secure storage rejected the upload (HTTP ${request.status}). Check the file format and try again.`));
+        }
+      };
+      request.onerror = () => {
+        if (attempt === 0) {
+          onProgress(null);
+          window.setTimeout(() => sendAttempt(1), 500);
+          return;
+        }
+        reject(new Error(
+          "Could not connect to secure file storage after retrying. Check your connection. If you are online, the storage bucket may not allow this website's origin in its CORS settings."
+        ));
+      };
+      request.ontimeout = () => reject(new Error("Upload timed out. Check your connection and try again."));
+      request.onabort = () => reject(new Error("Upload was interrupted. Please try again."));
+      request.send(file);
     };
-    request.onload = () => {
-      if (request.status >= 200 && request.status < 300) {
-        resolve();
-      } else if (request.status === 403) {
-        reject(new Error("The secure upload link expired. Please try uploading again."));
-      } else {
-        reject(new Error("The file could not be uploaded to secure storage."));
-      }
-    };
-    request.onerror = () => reject(new Error("Network error while uploading. Check your connection and retry."));
-    request.ontimeout = () => reject(new Error("Upload timed out. Check your connection and try again."));
-    request.onabort = () => reject(new Error("Upload was interrupted. Please try again."));
-    request.send(file);
+    sendAttempt(0);
   });
 }
 
@@ -70,9 +86,17 @@ async function completeNoteUpload(uploadToken: string): Promise<UploadResponse> 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uploadToken }),
       });
-      const result = (await response.json()) as UploadResponse;
+      const result = (await response.json().catch(() => ({
+        success: false,
+      }))) as UploadResponse;
+      if (response.status >= 500 && attempt === 0) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 300));
+        continue;
+      }
       if (!response.ok || !result.success) {
-        throw new Error(result.message || "The uploaded file could not be saved.");
+        throw new Error(
+          result.message || `The uploaded file could not be saved (HTTP ${response.status}).`
+        );
       }
       return result;
     } catch (error) {
@@ -81,6 +105,28 @@ async function completeNoteUpload(uploadToken: string): Promise<UploadResponse> 
     }
   }
   throw new Error("The uploaded file could not be saved.");
+}
+
+async function requestUploadUrl(body: Record<string, string | number>): Promise<Response> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch("/api/notes/upload/presign", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (response.status >= 500 && attempt === 0) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 300));
+        continue;
+      }
+      return response;
+    } catch (error) {
+      if (!(error instanceof TypeError) || attempt === 1) throw error;
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 300));
+    }
+  }
+  throw new Error("Could not prepare your file upload.");
 }
 
 function openPendingUploadDatabase(): Promise<IDBDatabase> {
@@ -161,7 +207,7 @@ const UploadNote: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState("");
 
   const studyTypes: string[] = [
@@ -232,15 +278,11 @@ const UploadNote: React.FC = () => {
 
     setUploadError("");
     setUploadSuccess("");
-    setUploadProgress(0);
+    setUploadProgress(null);
     setLoading(true);
 
     try {
-      const presignResponse = await fetch("/api/notes/upload/presign", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const presignResponse = await requestUploadUrl({
           fileName: file.name,
           contentType: file.type,
           fileSize: file.size,
@@ -252,7 +294,6 @@ const UploadNote: React.FC = () => {
           studyType,
           year,
           visibility,
-        }),
       });
 
       if (presignResponse.status === 401) {
@@ -276,7 +317,6 @@ const UploadNote: React.FC = () => {
         throw new Error(`This file exceeds the ${Math.floor(upload.maxFileSizeBytes / (1024 * 1024))} MB limit.`);
       }
 
-      setUploadProgress(1);
       await uploadFileToS3(upload.uploadUrl, file, upload.headers, setUploadProgress);
       setUploadProgress(95);
 
@@ -289,7 +329,13 @@ const UploadNote: React.FC = () => {
       await new Promise<void>((resolve) => window.setTimeout(resolve, 600));
       router.push("/notes");
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Something went wrong while uploading. Please try again.");
+      setUploadError(
+        error instanceof TypeError
+          ? "Could not reach NotesHub or secure file storage. Check your connection and retry."
+          : error instanceof Error
+            ? error.message
+            : "Something went wrong while uploading. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -320,7 +366,7 @@ const UploadNote: React.FC = () => {
               onChange={(e) => {
                 setFile(e.target.files?.[0] || null);
                 setUploadError("");
-                setUploadProgress(0);
+                setUploadProgress(null);
               }}
             />
             <p className="-mt-2 text-xs text-slate-400">
@@ -565,12 +611,12 @@ const UploadNote: React.FC = () => {
           <div className="mt-5" role="status" aria-live="polite">
             <div className="mb-2 flex justify-between text-sm text-slate-300">
               <span>Uploading securely...</span>
-              <span>{uploadProgress}%</span>
+              <span>{uploadProgress === null ? "Progress unavailable" : `${uploadProgress}%`}</span>
             </div>
             <progress
               className="h-2 w-full accent-cyan-400"
               max={100}
-              value={uploadProgress}
+              value={uploadProgress ?? undefined}
               aria-label="Upload progress"
             />
           </div>
@@ -578,6 +624,7 @@ const UploadNote: React.FC = () => {
 
         {/* Button */}
         <button
+          type="button"
           onClick={handleUpload}
           disabled={loading}
           className="mt-7 w-full rounded-lg bg-linear-to-r from-cyan-500 to-blue-600 py-3 font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-700"
