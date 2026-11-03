@@ -1,11 +1,11 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { getRedirectDestination } from "../authRedirect";
 import { showToast } from "../components/ToastNotifications";
 import PasswordInput from "../components/PasswordInput";
-import { encryptAuthPayload } from "../auth/encryptAuthPayload";
+import { encryptAuthPayload, prepareAuthEncryptionKey } from "../auth/encryptAuthPayload";
 import LoadingIndicator from "../components/LoadingIndicator";
 
 interface LoginErrors {
@@ -20,6 +20,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LoginErrors>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    void prepareAuthEncryptionKey().catch((error: unknown) => {
+      console.warn("Login encryption key prefetch failed; it will be retried on submit.", error);
+    });
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
