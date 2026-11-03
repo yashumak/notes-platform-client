@@ -30,12 +30,17 @@ export default function AppProviders({ children }: { children: ReactNode }) {
       ? undefined
       : new BroadcastChannel("noteshub-auth");
     const refreshSession = async (broadcast: boolean) => {
+      await queryClient.cancelQueries({ queryKey: sessionIdentityKey, exact: true });
       queryClient.setQueryData(sessionIdentityKey, checkingSession);
       queryClient.removeQueries({ queryKey: noteKeys.root });
       if (broadcast) channel?.postMessage("session-changed");
 
       try {
-        queryClient.setQueryData(sessionIdentityKey, await fetchSessionIdentity());
+        await queryClient.fetchQuery({
+          queryKey: sessionIdentityKey,
+          queryFn: () => fetchSessionIdentity(),
+          staleTime: 0,
+        });
       } catch (error) {
         console.error("Could not verify the session after an authentication change.", error);
         queryClient.setQueryData(sessionIdentityKey, anonymousSession);
