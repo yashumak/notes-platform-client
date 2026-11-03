@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClickOutside } from "../hooks/useClickOutside";
-import LoadingIndicator from "../components/LoadingIndicator";
 import {
   fetchMyNotes,
   fetchSessionIdentity,
@@ -47,12 +46,14 @@ export default function DashboardPage() {
     year: "",
   });
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [mobilePhotoPreviewOpen, setMobilePhotoPreviewOpen] = useState(false);
   const [collegeSearch, setCollegeSearch] = useState("");
   const [showCollegeList, setShowCollegeList] = useState(false);
   const collegeDropdownRef = useRef<HTMLDivElement>(null);
   const [branchSearch, setBranchSearch] = useState("");
   const [showBranchList, setShowBranchList] = useState(false);
   const branchDropdownRef = useRef<HTMLDivElement>(null);
+  const loggedOutRef = useRef(false);
   const [profileSaveError, setProfileSaveError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [logoutError, setLogoutError] = useState("");
@@ -68,17 +69,20 @@ export default function DashboardPage() {
     enabled: session?.status === "authenticated" && !sessionQuery.isFetching,
   });
   const uploadedNotes =
-    session?.status === "authenticated" && !sessionQuery.isFetching
+    session?.status === "authenticated"
       ? notesQuery.data ?? []
       : [];
   const loadingNotes =
     session?.status === "authenticated" &&
-    (sessionQuery.isFetching || notesQuery.isPending);
+    notesQuery.isPending &&
+    notesQuery.fetchStatus === "fetching";
 
   useClickOutside(collegeDropdownRef, () => setShowCollegeList(false), showCollegeList);
   useClickOutside(branchDropdownRef, () => setShowBranchList(false), showBranchList);
 
   useEffect(() => {
+    if (!editingProfile || (colleges.length > 0 && branches.length > 0)) return;
+
     const loadProfileOptions = async () => {
       try {
         const response = await fetch("/data/engineeringData.json");
@@ -99,11 +103,20 @@ export default function DashboardPage() {
     };
 
     loadProfileOptions();
-  }, []);
+  }, [branches.length, colleges.length, editingProfile]);
 
   useEffect(() => {
-    if (session?.status === "anonymous") router.replace("/login");
+    if (session?.status === "anonymous" && !loggedOutRef.current) router.replace("/login");
   }, [router, session?.status]);
+
+  useEffect(() => {
+    if (!mobilePhotoPreviewOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobilePhotoPreviewOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [mobilePhotoPreviewOpen]);
 
   const retryUploadedNotes = () => {
     void notesQuery.refetch();
@@ -184,6 +197,7 @@ export default function DashboardPage() {
       });
       if (!response.ok) throw new Error("Could not log out. Please try again.");
 
+      loggedOutRef.current = true;
       window.dispatchEvent(new Event("auth-state-updated"));
       router.replace("/");
     } catch (logoutFailure) {
@@ -245,7 +259,9 @@ export default function DashboardPage() {
   if (sessionQuery.isPending || session?.status === "checking") {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 pb-16 pt-28">
-        <LoadingIndicator label="Loading your dashboard" className="min-h-64" />
+        <p role="status" aria-live="polite" aria-busy="true" className="text-sm text-slate-300">
+          Loading your dashboard...
+        </p>
       </main>
     );
   }
@@ -268,12 +284,12 @@ export default function DashboardPage() {
   if (!profile) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 pb-16 pt-28">
-        <LoadingIndicator label="Opening your dashboard" className="min-h-64" />
+        <p role="status" aria-live="polite" aria-busy="true" className="text-sm text-slate-300">
+          Opening your dashboard...
+        </p>
       </main>
     );
   }
-
-  if (!profile) return null;
 
   return (
     <main className="min-h-screen px-4 pb-20 pt-28 text-slate-100 sm:px-6">
@@ -290,7 +306,13 @@ export default function DashboardPage() {
                   unoptimized
                   className="h-full w-full rounded-full object-cover"
                 />
-                <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 w-48 -translate-x-1/2 translate-y-2 overflow-hidden rounded-xl border border-slate-600 bg-slate-900 p-1 opacity-0 shadow-2xl transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <button
+                  type="button"
+                  aria-label="View profile photo"
+                  onClick={() => setMobilePhotoPreviewOpen(true)}
+                  className="absolute inset-0 z-10 rounded-full md:hidden"
+                />
+                <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 hidden w-48 -translate-x-1/2 translate-y-2 overflow-hidden rounded-xl border border-slate-600 bg-slate-900 p-1 opacity-0 shadow-2xl transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 md:block">
                   <Image
                     src={profile.profilePhotoUrl}
                     alt={`${profile.name}'s profile photo preview`}
@@ -305,6 +327,39 @@ export default function DashboardPage() {
               profile.name.trim().charAt(0).toUpperCase()
             )}
           </div>
+          {mobilePhotoPreviewOpen && profile.profilePhotoUrl && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/85 p-6 md:hidden">
+              <button
+                type="button"
+                aria-label="Close profile photo preview"
+                onClick={() => setMobilePhotoPreviewOpen(false)}
+                className="absolute inset-0"
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={`${profile.name}'s profile photo`}
+                className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-600 bg-slate-900 p-2 shadow-2xl"
+              >
+                <button
+                  type="button"
+                  aria-label="Close profile photo preview"
+                  onClick={() => setMobilePhotoPreviewOpen(false)}
+                  className="absolute -right-3 -top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-500 bg-slate-800 text-xl text-white shadow-lg"
+                >
+                  &times;
+                </button>
+                <Image
+                  src={profile.profilePhotoUrl}
+                  alt={`${profile.name}'s profile photo`}
+                  width={512}
+                  height={512}
+                  unoptimized
+                  className="h-auto max-h-[75vh] w-full rounded-xl object-contain"
+                />
+              </div>
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-sm font-semibold uppercase text-cyan-300">Student account</p>
             <h1 className="mt-1 wrap-break-word text-3xl font-bold text-white">{profile.name}</h1>
@@ -558,7 +613,13 @@ export default function DashboardPage() {
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-2xl font-semibold text-white">My uploaded notes</h2>
-              <p className="mt-1 text-sm text-slate-400">{uploadedNotes.length} {uploadedNotes.length === 1 ? "upload" : "uploads"}</p>
+              <p className="mt-1 text-sm text-slate-400">
+                {notesQuery.isSuccess
+                  ? `${uploadedNotes.length} ${uploadedNotes.length === 1 ? "upload" : "uploads"}`
+                  : notesQuery.isError
+                    ? "Uploads unavailable"
+                    : "Loading uploads..."}
+              </p>
             </div>
             <a
               href="/upload"
@@ -585,14 +646,18 @@ export default function DashboardPage() {
           )}
 
           {loadingNotes && (
-            <LoadingIndicator
-              label="Loading your uploads"
-              className="min-h-40 rounded-xl border border-slate-700 bg-slate-900/50"
-            />
+            <p
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+              className="rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-6 text-sm text-slate-300"
+            >
+              Loading your uploads...
+            </p>
           )}
-          {!loadingNotes && !notesQuery.isError && uploadedNotes.length === 0 ? (
-            <p className="border-t border-slate-700 py-6 text-slate-400">You haven’t uploaded any materials yet.</p>
-          ) : !loadingNotes && !notesQuery.isError && (
+          {!loadingNotes && notesQuery.isSuccess && uploadedNotes.length === 0 ? (
+            <p className="border-t border-slate-700 py-6 text-slate-400">You haven’t uploaded any notes yet.</p>
+          ) : !loadingNotes && notesQuery.isSuccess && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {uploadedNotes.map((note) => (
                 <article key={note._id} className="flex min-w-0 flex-col border-t-2 border-cyan-500 bg-slate-900/60 p-5">
