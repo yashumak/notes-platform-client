@@ -8,6 +8,9 @@ interface EncryptedAuthPayload {
   encryptedData: string;
 }
 
+let cachedRsaKey: { key: CryptoKey; expiresAt: number } | undefined;
+let rsaKeyRequest: Promise<CryptoKey> | undefined;
+
 const toBase64 = (bytes: Uint8Array) => {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -21,13 +24,7 @@ const pemToBytes = (pem: string) => {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 };
 
-export async function encryptAuthPayload(
-  payload: Record<string, string>
-): Promise<EncryptedAuthPayload> {
-  if (!window.isSecureContext || !window.crypto?.subtle) {
-    throw new Error("Secure browser encryption requires HTTPS or localhost.");
-  }
-
+async function loadRsaKey(): Promise<CryptoKey> {
   const keyResponse = await fetch("/api/auth/encryption-key", { cache: "no-store" });
   if (!keyResponse.ok) {
     throw new Error(
@@ -37,17 +34,46 @@ export async function encryptAuthPayload(
   }
 
   const { publicKey } = (await keyResponse.json()) as AuthEncryptionKeyResponse;
-  if (!publicKey) {
-    throw new Error("The authentication encryption key is unavailable.");
-  }
+  if (!publicKey) throw new Error("The authentication encryption key is unavailable.");
 
-  const rsaKey = await window.crypto.subtle.importKey(
+  return window.crypto.subtle.importKey(
     "spki",
     pemToBytes(publicKey),
     { name: "RSA-OAEP", hash: "SHA-256" },
     false,
     ["encrypt"]
   );
+}
+
+async function getRsaKey(): Promise<CryptoKey> {
+  if (cachedRsaKey && cachedRsaKey.expiresAt > Date.now()) {
+    return cachedRsaKey.key;
+  }
+  if (!rsaKeyRequest) {
+    rsaKeyRequest = loadRsaKey()
+      .then((key) => {
+        cachedRsaKey = { key, expiresAt: Date.now() + 5 * 60 * 1000 };
+        return key;
+      })
+      .finally(() => {
+        rsaKeyRequest = undefined;
+      });
+  }
+  return rsaKeyRequest;
+}
+
+export async function prepareAuthEncryptionKey(): Promise<void> {
+  await getRsaKey();
+}
+
+export async function encryptAuthPayload(
+  payload: Record<string, string>
+): Promise<EncryptedAuthPayload> {
+  if (!window.isSecureContext || !window.crypto?.subtle) {
+    throw new Error("Secure browser encryption requires HTTPS or localhost.");
+  }
+
+  const rsaKey = await getRsaKey();
   const aesKey = await window.crypto.subtle.generateKey(
     { name: "AES-GCM", length: 256 },
     true,
