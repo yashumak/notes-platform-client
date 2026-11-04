@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getRateLimitMessage } from "./auth/apiErrors";
 
 interface NoteSummary {
   total: number;
@@ -10,15 +11,31 @@ interface NoteSummary {
 
 export default function Home() {
   const [stats, setStats] = useState<NoteSummary>({ total: 0, universities: 0, studyTypes: 0 });
+  const [statsError, setStatsError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/notes/stats", { signal: controller.signal })
-      .then((response) => {
+      .then(async (response) => {
+        if (response.status === 429) {
+          const errorData: { message?: string; retryAfterSeconds?: number } | null =
+            await response.json().catch(() => null);
+          const retryAfter = response.headers.get("retry-after");
+          const retryAfterSeconds =
+            typeof errorData?.retryAfterSeconds === "number"
+              ? errorData.retryAfterSeconds
+              : retryAfter && /^\d+$/.test(retryAfter)
+                ? Number(retryAfter)
+                : undefined;
+          setStatsError(getRateLimitMessage(errorData?.message, retryAfterSeconds));
+          return null;
+        }
         if (!response.ok) throw new Error("Unable to load note totals");
         return response.json();
       })
-      .then((data) => setStats(data.stats))
+      .then((data) => {
+        if (data?.stats) setStats(data.stats);
+      })
       .catch(() => undefined);
 
     const elements = document.querySelectorAll(".fade-up");
@@ -90,6 +107,11 @@ export default function Home() {
             </div>
           ))}
         </div>
+        {statsError && (
+          <p role="status" className="mx-auto mt-5 max-w-6xl text-center text-sm text-slate-300">
+            {statsError}
+          </p>
+        )}
       </section>
 
       <div className="mx-auto max-w-6xl px-6 py-24 sm:py-28">
