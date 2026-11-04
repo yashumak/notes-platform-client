@@ -6,6 +6,7 @@ import { getRedirectDestination } from "../authRedirect";
 import { showToast } from "../components/ToastNotifications";
 import PasswordInput from "../components/PasswordInput";
 import { encryptAuthPayload, prepareAuthEncryptionKey } from "../auth/encryptAuthPayload";
+import { getApiErrorMessage } from "../auth/apiErrors";
 import LoadingIndicator from "../components/LoadingIndicator";
 
 interface LoginErrors {
@@ -29,6 +30,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading) return;
     setErrors({});
     const newErrors: LoginErrors = {};
 
@@ -52,10 +54,7 @@ export default function LoginPage() {
       window.dispatchEvent(new Event("auth-state-updated"));
       router.replace(getRedirectDestination("/"));
     } catch (error: unknown) {
-      const message = axios.isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message
-        : undefined;
-      setErrors({ api: message || (error instanceof Error ? error.message : "Something went wrong") });
+      setErrors({ api: getApiErrorMessage(error, "Something went wrong") });
     } finally {
       setLoading(false);
     }
