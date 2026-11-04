@@ -5,8 +5,34 @@ const backendUrl =
 
 export async function GET() {
   try {
-    const response = await fetch(`${backendUrl}/api/notes/stats`, { cache: "no-store" });
+    const response = await fetch(`${backendUrl}/api/notes/stats`, {
+      next: { revalidate: 60 },
+    });
     if (!response.ok) {
+      if (response.status === 429) {
+        const errorPayload: { message?: string; retryAfterSeconds?: number } | null =
+          await response.json().catch(() => null);
+        const retryAfter = response.headers.get("retry-after");
+        const retryAfterSeconds =
+          typeof errorPayload?.retryAfterSeconds === "number"
+            ? errorPayload.retryAfterSeconds
+            : retryAfter && /^\d+$/.test(retryAfter)
+              ? Number(retryAfter)
+              : undefined;
+        return NextResponse.json(
+          {
+            message: errorPayload?.message || "Too many requests. Please try again later.",
+            ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
+          },
+          {
+            status: 429,
+            headers: {
+              "Cache-Control": "no-store",
+              ...(retryAfter ? { "Retry-After": retryAfter } : {}),
+            },
+          }
+        );
+      }
       return NextResponse.json(
         { message: "Could not load note statistics" },
         { status: response.status }
