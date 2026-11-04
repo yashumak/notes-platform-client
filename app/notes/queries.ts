@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { ApiResponseError, getRateLimitMessage } from "../auth/apiErrors";
 
 export const notesPageSize = 30;
 
@@ -111,8 +112,24 @@ async function readJsonWithProgress<T>(
 }
 
 async function readError(response: Response, fallback: string): Promise<Error> {
-  const errorData: { message?: string } | null = await response.json().catch(() => null);
-  return new Error(errorData?.message || `${fallback} (HTTP ${response.status}).`);
+  const errorData: { message?: string; retryAfterSeconds?: number } | null =
+    await response.json().catch(() => null);
+  if (response.status === 429) {
+    const header = response.headers.get("retry-after");
+    const headerSeconds = header && /^\d+$/.test(header) ? Number(header) : undefined;
+    return new ApiResponseError(
+      getRateLimitMessage(
+        errorData?.message,
+        errorData?.retryAfterSeconds ?? headerSeconds
+      ),
+      response.status,
+      errorData?.retryAfterSeconds ?? headerSeconds
+    );
+  }
+  return new ApiResponseError(
+    errorData?.message || `${fallback} (HTTP ${response.status}).`,
+    response.status
+  );
 }
 
 export async function fetchSessionIdentity(signal?: AbortSignal): Promise<CachedSession> {
