@@ -9,6 +9,7 @@ import { showToast } from "../components/ToastNotifications";
 import PasswordInput from "../components/PasswordInput";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { encryptAuthPayload } from "../auth/encryptAuthPayload";
+import { getApiErrorMessage } from "../auth/apiErrors";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function SignupPage() {
   const [showBranchList, setShowBranchList] = useState(false);
   const branchDropdownRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [universities, setUniversities] = useState<string[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
@@ -98,8 +100,10 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validateForm()) return;
 
+    setIsSubmitting(true);
     try {
       await axios.post(
         "/api/auth/register",
@@ -138,10 +142,9 @@ export default function SignupPage() {
       window.dispatchEvent(new Event("auth-state-updated"));
       router.replace(getRedirectDestination("/dashboard"));
     } catch (error: unknown) {
-      const message = axios.isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message
-        : undefined;
-      showToast(message || (error instanceof Error ? error.message : "Registration failed"), "error");
+      showToast(getApiErrorMessage(error, "Registration failed"), "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -351,9 +354,10 @@ export default function SignupPage() {
           <div className="col-span-1 md:col-span-2">
             <button
               type="submit"
-              className="w-full rounded-lg bg-linear-to-r from-cyan-500 to-blue-600 p-3 font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+              disabled={isSubmitting}
+              className="w-full rounded-lg bg-linear-to-r from-cyan-500 to-blue-600 p-3 font-semibold text-white shadow-lg shadow-cyan-950/30 transition hover:from-cyan-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-700"
             >
-              Register
+              {isSubmitting ? "Creating account..." : "Register"}
             </button>
 
             <p className="mt-5 text-center text-sm text-slate-400">
