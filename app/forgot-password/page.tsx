@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PasswordInput from "../components/PasswordInput";
 import LoadingIndicator from "../components/LoadingIndicator";
+import { getApiErrorMessage } from "../auth/apiErrors";
 
 interface ForgotPasswordErrors {
   currentPassword?: string;
@@ -24,6 +25,7 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) return;
     setErrors({});
 
     const validationErrors: ForgotPasswordErrors = {};
@@ -52,10 +54,7 @@ export default function ForgotPasswordPage() {
       );
       router.replace("/login");
     } catch (error: unknown) {
-      const message = axios.isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message
-        : undefined;
-      setErrors({ api: message || "Could not update your password. Please try again." });
+      setErrors({ api: getApiErrorMessage(error, "Could not update your password. Please try again.") });
     } finally {
       setLoading(false);
     }
