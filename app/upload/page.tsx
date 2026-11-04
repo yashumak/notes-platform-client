@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useClickOutside } from "../hooks/useClickOutside";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { invalidateNotes } from "../notes/queries";
+import { getRateLimitMessage } from "../auth/apiErrors";
 
 interface UploadResponse {
   success: boolean;
@@ -52,7 +53,12 @@ function uploadFileToS3(
           resolve();
         } else if (request.status === 403) {
           reject(new Error("The secure upload link expired or storage rejected the request. Please try again."));
-        } else if ((request.status === 408 || request.status === 429 || request.status >= 500) && attempt === 0) {
+        } else if (request.status === 429) {
+          const retryAfter = request.getResponseHeader("Retry-After");
+          const retryAfterSeconds =
+            retryAfter && /^\d+$/.test(retryAfter) ? Number(retryAfter) : undefined;
+          reject(new Error(getRateLimitMessage("Secure file storage is busy.", retryAfterSeconds)));
+        } else if ((request.status === 408 || request.status >= 500) && attempt === 0) {
           onProgress(null);
           window.setTimeout(() => sendAttempt(1), 500);
         } else {
