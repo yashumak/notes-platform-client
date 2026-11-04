@@ -9,6 +9,7 @@ import {
   noteKeys,
   sessionIdentityKey,
 } from "./notes/queries";
+import { ApiResponseError } from "./auth/apiErrors";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -18,7 +19,9 @@ export default function AppProviders({ children }: { children: ReactNode }) {
           queries: {
             staleTime: 60_000,
             gcTime: 5 * 60_000,
-            retry: 1,
+            retry: (failureCount, error) =>
+              !(error instanceof ApiResponseError && error.status === 429) &&
+              failureCount < 1,
             refetchOnWindowFocus: false,
           },
         },
