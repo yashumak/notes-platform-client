@@ -497,7 +497,7 @@ function NotesContent() {
             <LoadingIndicator
               label="Loading your study notes"
               progress={notesProgress}
-              className="min-h-48 rounded-xl border border-slate-700 bg-slate-900/50"
+              className="min-h-60 justify-center rounded-xl border border-slate-700 bg-slate-900/50"
             />
           )}
           {!loadingNotes && notesError && (
