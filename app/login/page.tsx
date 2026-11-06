@@ -23,8 +23,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    void prepareAuthEncryptionKey().catch((error: unknown) => {
-      console.warn("Login encryption key prefetch failed; it will be retried on submit.", error);
+    void prepareAuthEncryptionKey().catch(() => {
+      console.warn("Authentication key prefetch failed; it will be retried on submit.");
     });
   }, []);
 

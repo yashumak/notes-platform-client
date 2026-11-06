@@ -40,6 +40,14 @@ export interface NotesPage {
   legacyPagination: boolean;
 }
 
+export interface MyNotesPage {
+  notes: Note[];
+  total: number;
+  totalPages: number;
+  page: number;
+  limit: number;
+}
+
 export interface SessionIdentity {
   status: "checking";
   userId: null;
@@ -71,13 +79,16 @@ export const sessionIdentityKey = ["session", "identity"] as const;
 export const checkingSession: SessionIdentity = { status: "checking", userId: null };
 export const anonymousSession: AnonymousSession = { status: "anonymous", userId: null };
 
+const isSafeInteger = (value: unknown): value is number =>
+  typeof value === "number" && Number.isSafeInteger(value);
+
 export const noteKeys = {
   root: ["notes"] as const,
   publicRoot: ["notes", "public"] as const,
   public: (accountKey: string, params: NoteQueryParams) =>
     [...noteKeys.publicRoot, accountKey, params] as const,
   mineRoot: ["notes", "mine"] as const,
-  mine: (accountKey: string) => [...noteKeys.mineRoot, accountKey] as const,
+  mine: (accountKey: string, page: number) => [...noteKeys.mineRoot, accountKey, page] as const,
 };
 
 async function readJsonWithProgress<T>(
@@ -144,33 +155,49 @@ export async function fetchSessionIdentity(signal?: AbortSignal): Promise<Cached
   const data: {
     isAuthenticated?: boolean;
     expiresAt?: number;
-    user?: Partial<AuthenticatedSession["user"]> & { user_id?: string };
+    user?: Partial<AuthenticatedSession["user"]>;
   } = await response.json();
   if (!data.isAuthenticated) return anonymousSession;
-  if (
-    typeof data.user?.email !== "string" ||
-    !data.user.email.trim() ||
-    typeof data.user.name !== "string"
-  ) {
-    throw new Error("The session service returned an invalid user identity.");
+
+  const profileResponse = await fetch("/api/auth/profile", {
+    cache: "no-store",
+    credentials: "include",
+    signal,
+  });
+  if (profileResponse.status === 401) return anonymousSession;
+  if (!profileResponse.ok && profileResponse.status !== 404) {
+    throw await readError(profileResponse, "Could not load your profile");
   }
-  const email = data.user.email.trim().toLowerCase();
-  const accountKey =
-    (typeof data.user.id === "string" && data.user.id.trim()) ||
-    (typeof data.user.user_id === "string" && data.user.user_id.trim()) ||
-    `email:${email}`;
+
+  const profileData: {
+    user?: Partial<AuthenticatedSession["user"]>;
+  } = profileResponse.ok ? await profileResponse.json() : { user: data.user };
+  if (profileResponse.status === 404 && !profileData.user) {
+    throw await readError(profileResponse, "Could not load your profile");
+  }
+  const profile = profileData.user;
+  if (
+    typeof profile?.id !== "string" ||
+    !profile.id.trim() ||
+    typeof profile.email !== "string" ||
+    !profile.email.trim() ||
+    typeof profile.name !== "string"
+  ) {
+    throw new Error("The profile service returned an invalid profile.");
+  }
+  const accountKey = profile.id;
   const expiresAt =
     typeof data.expiresAt === "number" && Number.isFinite(data.expiresAt)
       ? data.expiresAt
       : undefined;
   const user = {
     id: accountKey,
-    name: data.user.name,
-    email: data.user.email,
-    university: data.user.university,
-    course: data.user.course,
-    year: data.user.year,
-    profilePhotoUrl: data.user.profilePhotoUrl,
+    name: profile.name,
+    email: profile.email,
+    university: profile.university,
+    course: profile.course,
+    year: profile.year,
+    profilePhotoUrl: profile.profilePhotoUrl,
   };
   return {
     status: "authenticated",
@@ -225,20 +252,68 @@ export async function fetchPublicNotes(
   };
 }
 
-export async function fetchMyNotes(userId: string, signal: AbortSignal): Promise<Note[]> {
+export async function fetchMyNotes(
+  userId: string,
+  page: number,
+  signal: AbortSignal
+): Promise<MyNotesPage> {
   if (!userId) throw new Error("A verified user is required to load private notes.");
 
-  const response = await fetch("/api/notes/mine", {
+  const searchParams = new URLSearchParams({ page: String(page), limit: String(notesPageSize) });
+  const response = await fetch(`/api/notes/mine?${searchParams.toString()}`, {
     cache: "no-store",
     credentials: "include",
     signal,
   });
   if (!response.ok) throw await readError(response, "Could not load your uploads");
-  const data: { notes?: Note[] } = await response.json();
-  if (!Array.isArray(data.notes)) {
+  const payload: unknown = await response.json();
+  const data = Array.isArray(payload)
+    ? { notes: payload as Note[] }
+    : payload && typeof payload === "object"
+      ? payload as {
+          notes?: unknown;
+          pagination?: { page?: unknown; limit?: unknown; total?: unknown; totalPages?: unknown };
+        }
+      : undefined;
+  if (!Array.isArray(data?.notes)) {
     throw new Error("The uploads service returned an invalid response.");
   }
-  return data.notes;
+
+  const notes = data.notes as Note[];
+  const pagination = data.pagination;
+  if (pagination === undefined) {
+    const total = notes.length;
+    const totalPages = Math.ceil(total / notesPageSize);
+    const offset = (page - 1) * notesPageSize;
+    return {
+      notes: notes.slice(offset, offset + notesPageSize),
+      total,
+      totalPages,
+      page,
+      limit: notesPageSize,
+    };
+  }
+  if (
+    !pagination ||
+    !isSafeInteger(pagination.page) ||
+    !isSafeInteger(pagination.limit) ||
+    !isSafeInteger(pagination.total) ||
+    !isSafeInteger(pagination.totalPages) ||
+    pagination.page < 1 ||
+    pagination.limit < 1 ||
+    pagination.total < 0 ||
+    pagination.totalPages < 0
+  ) {
+    throw new Error("The uploads service returned an invalid response.");
+  }
+
+  return {
+    notes,
+    total: pagination.total,
+    totalPages: pagination.totalPages,
+    page: pagination.page,
+    limit: pagination.limit,
+  };
 }
 
 export function invalidateNotes(queryClient: QueryClient) {

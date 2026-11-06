@@ -13,6 +13,7 @@ import {
   type AuthenticatedSession,
   type CachedSession,
   type Note,
+  type MyNotesPage,
 } from "../notes/queries";
 
 type AccountProfile = AuthenticatedSession["user"];
@@ -60,18 +61,21 @@ export default function DashboardPage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const [myNotesPage, setMyNotesPage] = useState(1);
   const notesQuery = useQuery({
-    queryKey: noteKeys.mine(profile?.id ?? ""),
+    queryKey: noteKeys.mine(profile?.id ?? "", myNotesPage),
     queryFn: ({ signal }) => {
       if (!profile?.id) throw new Error("A verified user is required to load private notes.");
-      return fetchMyNotes(profile.id, signal);
+      return fetchMyNotes(profile.id, myNotesPage, signal);
     },
     enabled: session?.status === "authenticated" && !sessionQuery.isFetching,
   });
   const uploadedNotes =
     session?.status === "authenticated"
-      ? notesQuery.data ?? []
+      ? notesQuery.data?.notes ?? []
       : [];
+  const uploadedNotesTotal = notesQuery.data?.total ?? 0;
+  const uploadedNotesTotalPages = notesQuery.data?.totalPages ?? 0;
   const loadingNotes =
     session?.status === "authenticated" &&
     notesQuery.isPending &&
@@ -236,11 +240,25 @@ export default function DashboardPage() {
       }
 
       if (profile?.id) {
-        queryClient.setQueryData<UploadedNote[]>(noteKeys.mine(profile.id), (currentNotes) =>
-          currentNotes?.filter((item) => item._id !== note._id) ?? []
+        queryClient.setQueryData<MyNotesPage>(
+          noteKeys.mine(profile.id, myNotesPage),
+          (currentPage) => {
+            if (!currentPage) return currentPage;
+            const total = Math.max(0, currentPage.total - 1);
+            return {
+              ...currentPage,
+              notes: currentPage.notes.filter((item) => item._id !== note._id),
+              total,
+              totalPages: Math.ceil(total / currentPage.limit),
+            };
+          }
         );
+        if (uploadedNotes.length === 1 && myNotesPage > 1) {
+          setMyNotesPage((currentPage) => Math.max(1, currentPage - 1));
+        }
       }
       void queryClient.invalidateQueries({ queryKey: noteKeys.publicRoot });
+      void queryClient.invalidateQueries({ queryKey: noteKeys.mineRoot });
     } catch (deleteFailure) {
       setDeleteError(deleteFailure instanceof Error ? deleteFailure.message : "Could not delete note. Please try again.");
     } finally {
@@ -615,7 +633,7 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-semibold text-white">My uploaded notes</h2>
               <p className="mt-1 text-sm text-slate-400">
                 {notesQuery.isSuccess
-                  ? `${uploadedNotes.length} ${uploadedNotes.length === 1 ? "upload" : "uploads"}`
+                  ? `${uploadedNotesTotal} ${uploadedNotesTotal === 1 ? "upload" : "uploads"}`
                   : notesQuery.isError
                     ? "Uploads unavailable"
                     : "Loading uploads..."}
@@ -655,7 +673,7 @@ export default function DashboardPage() {
               Loading your uploads...
             </p>
           )}
-          {!loadingNotes && notesQuery.isSuccess && uploadedNotes.length === 0 ? (
+          {!loadingNotes && notesQuery.isSuccess && uploadedNotesTotal === 0 ? (
             <p className="border-t border-slate-700 py-6 text-slate-400">You haven’t uploaded any notes yet.</p>
           ) : !loadingNotes && notesQuery.isSuccess && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -695,6 +713,34 @@ export default function DashboardPage() {
                 </article>
               ))}
             </div>
+          )}
+          {notesQuery.isSuccess && uploadedNotesTotalPages > 1 && (
+            <nav
+              aria-label="My uploads pagination"
+              className="mt-6 flex items-center justify-center gap-4"
+            >
+              <button
+                type="button"
+                onClick={() => setMyNotesPage((page) => Math.max(1, page - 1))}
+                disabled={myNotesPage <= 1 || notesQuery.isFetching}
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-200 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-slate-400">
+                Page {myNotesPage} of {uploadedNotesTotalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setMyNotesPage((page) => Math.min(uploadedNotesTotalPages, page + 1))
+                }
+                disabled={myNotesPage >= uploadedNotesTotalPages || notesQuery.isFetching}
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-200 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </nav>
           )}
         </section>
       </div>

@@ -44,8 +44,8 @@ export default function AppProviders({ children }: { children: ReactNode }) {
           queryFn: () => fetchSessionIdentity(),
           staleTime: 0,
         });
-      } catch (error) {
-        console.error("Could not verify the session after an authentication change.", error);
+      } catch {
+        console.error("Session verification failed; switching to anonymous state.");
         queryClient.setQueryData(sessionIdentityKey, anonymousSession);
       }
     };
