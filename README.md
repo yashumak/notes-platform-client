@@ -74,8 +74,6 @@ Make sure you have installed:
 
 1. Clone the Repository
 
-git clone YOUR_FRONTEND_REPOSITORY_URL
-
 2. Navigate to the Project Directory
 
 cd notes-platform-frontend
