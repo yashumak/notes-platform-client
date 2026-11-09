@@ -50,7 +50,6 @@ frontend/
 ├── public/
 ├── types/
 │
-├── .env.example
 ├── next.config.ts
 ├── package.json
 ├── package-lock.json
