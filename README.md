@@ -29,6 +29,7 @@ Technology Stack
 
 Project Structure
 
+```text
 frontend/
 │
 ├── app/
@@ -56,8 +57,7 @@ frontend/
 ├── postcss.config.mjs
 ├── tsconfig.json
 └── README.md
-
-Note: This is an illustrative structure. Actual folders and files may differ.
+```
 
 Getting Started
 
