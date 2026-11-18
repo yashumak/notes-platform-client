@@ -85,7 +85,7 @@ npm install
 
 Create a ".env.local" file in the frontend root directory.
 
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
 
 For production, replace the local URL with your deployed backend API URL.
 
@@ -131,7 +131,7 @@ Deploy using Vercel
 1. Push your frontend code to GitHub.
 2. Open https://vercel.com/.
 3. Import your frontend GitHub repository.
-4. Configure the environment variable "NEXT_PUBLIC_API_URL".
+4. Configure the environment variable "NEXT_PUBLIC_BACKEND_URL" (public backend origin only; never AWS, MongoDB, or JWT values).
 5. Deploy the application.
 
 After deployment, verify that the frontend communicates correctly with the production backend.
