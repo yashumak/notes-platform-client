@@ -29,7 +29,7 @@ async function loadRsaKey(): Promise<CryptoKey> {
   if (!keyResponse.ok) {
     throw new Error(
       `Could not load the authentication encryption key (HTTP ${keyResponse.status}). ` +
-      "Restart or redeploy the updated backend, then try again."
+      "Make sure the backend is running and reachable, then try again."
     );
   }
 

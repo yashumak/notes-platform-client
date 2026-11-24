@@ -312,9 +312,15 @@ const UploadNote: React.FC = () => {
         return;
       }
 
-      const upload = (await presignResponse.json()) as UploadResponse;
+      const upload = await presignResponse.json().catch(() => null) as UploadResponse | null;
       if (!presignResponse.ok) {
-        throw new Error(upload.message || "Could not prepare your file upload.");
+        throw new Error(
+          upload?.message ||
+          `Could not prepare your file upload (HTTP ${presignResponse.status}). Make sure the backend is running.`
+        );
+      }
+      if (!upload) {
+        throw new Error("The backend returned an invalid response while preparing your upload.");
       }
       if (!upload.uploadUrl || !upload.uploadToken || !upload.headers) {
         throw new Error("The server returned an invalid upload response.");

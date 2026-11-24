@@ -1,9 +1,10 @@
 import Link from "next/link";
+import FooterFeedbackForm from "./FooterFeedbackForm";
 
 export default function Footer() {
   return (
     <footer className="bg-gray-900 py-10 text-gray-300 sm:py-12">
-      <div className="mx-auto mt-0 grid max-w-6xl grid-cols-1 gap-8 px-4 sm:grid-cols-2 sm:gap-10 sm:px-6 lg:grid-cols-4">
+      <div className="mx-auto mt-0 grid max-w-6xl grid-cols-1 gap-8 px-4 sm:grid-cols-2 sm:gap-10 sm:px-6 lg:grid-cols-5">
 
         {/* Logo + About */}
         <div className="space-y-3">
@@ -39,12 +40,7 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Contact + Socials */}
-        <div>
-          <h3 className="text-xl font-semibold cursor-pointer text-white mb-4">Connect With Us</h3>
-          <a className="break-all text-gray-400 transition-colors hover:text-white" href="mailto:genteryourname296@gmail.com">Email: genteryourname296@gmail.com</a>
-
-        </div>
+        <FooterFeedbackForm />
       </div>
 
       {/* Bottom Section */}
